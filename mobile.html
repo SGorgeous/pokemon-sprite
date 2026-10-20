@@ -7,8 +7,10 @@
 <title>PokePic</title>
 <style>
 :root{
-  --bg:#0f1318; --panel:#171d24; --panel2:#1f2831; --line:#2a3542;
-  --fg:#e6edf5; --dim:#8b98a9; --acc:#4a9eff; --acc2:#ffb84a; --danger:#ff6b6b;
+  --bg:#f4f7fb; --panel:#ffffff; --panel2:#eef3f9; --line:#e2e9f2;
+  --fg:#31404f; --text:#31404f; --dim:#8b9aad;
+  --acc:#6bb3e6; --acc2:#f3a0c0; --danger:#ef7c7c;
+  --shadow:0 2px 10px rgba(120,150,190,.10);
   --nav:0px; --gr:3; --fab:76px;
   --safe-b:env(safe-area-inset-bottom,0px);
   --safe-t:env(safe-area-inset-top,0px);
@@ -21,14 +23,15 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 
 /* ---------- 顶栏 ---------- */
 header{flex:none;display:flex;align-items:center;gap:8px;
-  padding:calc(var(--safe-t) + 8px) 10px 8px;background:var(--panel);border-bottom:1px solid var(--line)}
-#q{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+  padding:calc(var(--safe-t) + 8px) 10px 8px;background:#fff;border-bottom:1px solid var(--line);
+  box-shadow:0 1px 6px rgba(120,150,190,.06)}
+#q{flex:1;min-width:0;background:var(--panel2);border:1px solid transparent;border-radius:20px;
   color:var(--fg);font-size:15px;padding:9px 12px;outline:none;font-family:inherit}
-#q:focus{border-color:var(--acc)}
-.iconbtn{flex:none;width:40px;height:40px;border-radius:10px;background:var(--panel2);
+#q:focus{border-color:var(--acc);background:#fff}
+.iconbtn{flex:none;width:40px;height:40px;border-radius:12px;background:var(--panel2);
   border:1px solid var(--line);color:var(--fg);font-size:16px;display:flex;align-items:center;
   justify-content:center;cursor:pointer}
-.iconbtn:active{background:#2b3742}
+.iconbtn:active{background:#dfe8f3}
 #btnMode{font-size:12px;width:auto;padding:0 10px;color:var(--dim)}
 
 /* ---------- 内容 ---------- */
@@ -43,19 +46,20 @@ header{flex:none;display:flex;align-items:center;gap:8px;
 .chips::-webkit-scrollbar{display:none}
 .chip{flex:none;padding:6px 12px;border-radius:16px;background:var(--panel2);border:1px solid var(--line);
   font-size:12.5px;color:var(--dim);cursor:pointer;white-space:nowrap}
-.chip.on{background:#1d3852;border-color:var(--acc);color:#cfe4ff}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff;box-shadow:0 2px 8px rgba(107,179,230,.35)}
 
 /* 网格 */
 .grid{display:grid;grid-template-columns:repeat(var(--gr),1fr);gap:8px;padding:10px 12px}
-.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:16px;
   overflow:hidden;cursor:pointer}
-.card .box{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:#0b0f13;
+.card .box{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:#f7fafd;
   overflow:hidden}
 .card img{max-width:100%;max-height:100%;image-rendering:pixelated;opacity:0;transition:opacity .15s}
 .card img.ok{opacity:1}
 .card .cap{font-size:10.5px;color:var(--dim);padding:3px 6px 5px;white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;text-align:center;line-height:1.25}
-.card .cap b{color:var(--fg);font-weight:500}
+.card .cap{color:var(--dim)}
+.card .cap b{color:var(--fg);font-weight:600}
 .card.sel{outline:2px solid var(--acc);outline-offset:-2px}
 .card .tick{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:11px;
   border:2px solid #ffffff90;background:#0009;display:none;align-items:center;justify-content:center;
@@ -69,7 +73,7 @@ header{flex:none;display:flex;align-items:center;gap:8px;
 .rows{padding:6px 12px}
 .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 4px;
   border-bottom:1px solid var(--line);font-size:14.5px}
-.row:active{background:#ffffff08}
+.row:active{background:#eef3f9}
 .row .sub{color:var(--dim);font-size:12px}
 .row .val{color:var(--dim);font-size:12.5px}
 
@@ -77,28 +81,29 @@ header{flex:none;display:flex;align-items:center;gap:8px;
 #pmdTop{display:flex;gap:8px;padding:10px 12px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line)}
 #pmdTop select{background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:8px;
   padding:8px 10px;font-size:13px;font-family:inherit}
-#pmdCanvasWrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;
-  background-color:#0b0f13;
-  background-image:linear-gradient(45deg,#12171d 25%,transparent 25%,transparent 75%,#12171d 75%),
-                   linear-gradient(45deg,#12171d 25%,transparent 25%,transparent 75%,#12171d 75%);
+#pmdCanvasWrap{flex:none;height:min(42vh,320px);min-height:180px;margin:10px;
+  display:flex;align-items:center;justify-content:center;border-radius:16px;border:1px solid var(--line);
+  background-color:#fbfdff;
+  background-image:linear-gradient(45deg,#eef3f9 25%,transparent 25%,transparent 75%,#eef3f9 75%),
+                   linear-gradient(45deg,#eef3f9 25%,transparent 25%,transparent 75%,#eef3f9 75%);
   background-size:22px 22px;background-position:0 0,11px 11px;overflow:hidden}
 #cv{image-rendering:pixelated;display:block}
 #pmdCtl{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--line);flex-wrap:wrap}
-#pmdCtl button{flex:1;min-width:64px;padding:12px 6px;border-radius:10px;background:var(--panel2);
+#pmdCtl button{flex:1;min-width:64px;padding:12px 6px;border-radius:12px;background:#fff;
   border:1px solid var(--line);color:var(--fg);font-size:13px;font-family:inherit}
-#pmdCtl button.on{background:#1d3852;border-color:var(--acc);color:#cfe4ff}
+#pmdCtl button.on{background:var(--acc);border-color:var(--acc);color:#fff}
 
 /* 底部导航 */
-#selbar{position:fixed;left:0;right:0;bottom:calc(var(--nav) + var(--safe-b));background:#101820;
+#selbar{position:fixed;left:0;right:0;bottom:calc(var(--safe-b) + 10px);background:#ffffff;box-shadow:var(--shadow);
   border-top:1px solid var(--line);display:none;gap:6px;padding:8px 10px;z-index:30}
 #selbar.on{display:flex}
-#selbar button{flex:1;padding:11px 4px;border-radius:10px;border:1px solid var(--line);
+#selbar button{flex:1;padding:11px 4px;border-radius:12px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);
   background:var(--panel2);color:var(--fg);font-size:12.5px;font-family:inherit}
-#selbar button.primary{background:#1d3852;border-color:var(--acc);color:#cfe4ff}
+#selbar button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
 #selbar button:disabled{opacity:.4}
 
 /* 进度浮层 */
-#prog{position:fixed;left:12px;right:12px;bottom:calc(var(--nav) + var(--safe-b) + 8px);
+#prog{box-shadow:var(--shadow);position:fixed;left:12px;right:12px;bottom:calc(var(--nav) + var(--safe-b) + 8px);
   background:#141b23;border:1px solid var(--line);border-radius:14px;padding:12px 14px;z-index:40;
   display:none;box-shadow:0 8px 30px #0008}
 #prog.on{display:block}
@@ -130,7 +135,7 @@ header{flex:none;display:flex;align-items:center;gap:8px;
   nav{height:56px}
   #selbar{max-width:1440px;left:50%;transform:translateX(-50%);width:100%;
     bottom:calc(56px + var(--safe-b))}
-  #prog{max-width:900px;margin:0 auto;bottom:calc(56px + var(--safe-b) + 10px)}
+  #prog{box-shadow:var(--shadow);max-width:900px;margin:0 auto;bottom:calc(56px + var(--safe-b) + 10px)}
 }
 @media (min-width:1280px){
   .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr)) !important}
@@ -140,7 +145,7 @@ header{flex:none;display:flex;align-items:center;gap:8px;
   background:var(--panel);scrollbar-width:none}
 .pstrip::-webkit-scrollbar{display:none}
 .pcell{flex:none;width:62px;text-align:center;cursor:pointer}
-.pcell img{width:56px;height:56px;image-rendering:pixelated;background:#0b0f13;border-radius:8px;
+.pcell img{width:56px;height:56px;image-rendering:pixelated;background:#f7fafd;border-radius:10px;
   border:1px solid var(--line)}
 .pcell span{display:block;font-size:9.5px;color:var(--dim);margin-top:2px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -157,10 +162,10 @@ header{flex:none;display:flex;align-items:center;gap:8px;
 .chipbar{flex:none;display:flex;align-items:center;background:var(--bg);
   position:sticky;top:0;z-index:6;border-bottom:1px solid var(--line)}
 .chipbar .chips{flex:1;min-width:0;padding:0 8px}
-.chipbar .chipExpand{flex:none;width:28px;height:28px;margin-left:8px;border-radius:9px;
-  background:var(--panel2);border:1px solid var(--line);color:var(--acc2);font-size:13px;
+.chipbar .chipExpand{flex:none;width:28px;height:28px;margin-left:8px;border-radius:10px;
+  background:#fff;border:1px solid var(--line);color:var(--acc);box-shadow:var(--shadow);font-size:13px;
   font-family:inherit;display:flex;align-items:center;justify-content:center}
-#chipFull{position:absolute;left:0;right:0;top:0;bottom:0;z-index:40;background:#0f1318f2;
+#chipFull{position:absolute;left:0;right:0;top:0;bottom:0;z-index:40;background:#f4f7fbf2;
   display:none;flex-direction:column}
 #chipFull.on{display:flex}
 #chipFull .fh{flex:none;display:flex;align-items:center;justify-content:space-between;
@@ -169,19 +174,22 @@ header{flex:none;display:flex;align-items:center;gap:8px;
 #chipFull .fb .chip{font-size:13px;padding:8px 14px}
 #pmdLayout{flex:1;display:flex;min-height:0}
 #pmdLayout.lefty{flex-direction:row-reverse}
-#pmdMain{flex:1;min-width:0;display:flex;flex-direction:column}
+#pmdMain{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
 .sidecol{flex:none;width:34%;max-width:180px;min-width:100px;overflow-y:auto;
   border-left:1px solid var(--line);display:flex;flex-direction:column;gap:6px;padding:8px 6px}
 #pmdLayout.lefty .sidecol{border-left:0;border-right:1px solid var(--line)}
 .sidecol .chip{flex:none;font-size:11.5px;padding:7px 6px;text-align:center;border-radius:9px}
 #fab{position:fixed;left:50%;bottom:calc(var(--safe-b) + 12px);transform:translateX(-50%);
-  width:56px;height:56px;border-radius:50%;border:0;padding:0;z-index:62;background:#e9eef5;
-  box-shadow:0 8px 22px #000a;display:flex;align-items:center;justify-content:center}
+  width:56px;height:56px;border-radius:50%;border:0;padding:0;z-index:62;background:#fff;
+  box-shadow:0 6px 18px rgba(110,150,200,.28);display:flex;align-items:center;justify-content:center}
 #fab .ball{width:36px;height:36px;border-radius:50%;position:relative;overflow:hidden;
   background:linear-gradient(#ee3d3d 0 47%,#1b1b1b 47% 53%,#f4f7fb 53% 100%);border:2px solid #111}
 #fab .ball::after{content:"";position:absolute;left:50%;top:50%;width:12px;height:12px;
   margin:-8px 0 0 -8px;border-radius:50%;background:#f4f7fb;border:2px solid #111}
 #fab.on .ball{transform:rotate(90deg);transition:transform .25s}
+#fab{transition:transform .28s cubic-bezier(.2,.9,.25,1.1)}
+#fab.hide{transform:translate(-50%,34px)}
+#fab.hide .ball{transform:scale(.92)}
 #radial{position:fixed;inset:0;z-index:61;pointer-events:none}
 #radial.on{pointer-events:auto}
 #radial .rt{position:absolute;left:50%;bottom:calc(var(--safe-b) + 16px);width:52px;height:52px;
@@ -201,6 +209,7 @@ header{flex:none;display:flex;align-items:center;gap:8px;
     <button class="iconbtn" id="btnSrc" title="图片源">主</button>
     <input id="q" autocomplete="off" spellcheck="false">
     <button class="iconbtn" id="btnSet" title="设置">⚙</button>
+    <button class="iconbtn" id="btnBack" title="返回" style="display:none">←</button>
   </header>
 
   <div id="views">
@@ -821,7 +830,10 @@ function pmdLoop(t){
 function buildNameIndex(){
   // zh.json: { 中文名: showdownId }  → 反过来 id → 中文
   S.zhById = new Map();
-  for(const zh in (S.zh || {})) S.zhById.set(S.zh[zh], zh);
+  for(const zh in (S.zh || {})){
+    const id = String(S.zh[zh]).replace(/\s+/g, '-').toLowerCase();
+    S.zhById.set(id, zh);
+  }
 }
 function titleCase(id){
   return String(id || '').split('-').map((w, i) =>
@@ -829,32 +841,89 @@ function titleCase(id){
   ).join(' ');
 }
 /** 卡片上显示的精灵名：中文环境查 zhById，查不到退回英文。 */
-const FORM_SUFFIX = {
-  mega:'Mega', megax:'MegaX', megay:'MegaY', gmax:'超极巨', f:'♀', m:'♂',
-  alola:'阿罗拉', galar:'伽勒尔', hisui:'洗翠', paldea:'帕底亚', totem:'霸主',
-  origin:'起源', land:'化身', sky:'天空', therian:'灵兽', white:'白', black:'黑',
-  resolute:'觉悟', pirouette:'舞步', blade:'刀剑', shield:'盾牌', zen:'达摩',
+/* ---- 形态译名 ----
+   官方叫法：
+     -mega / -megax / -megay  → 超级XX / 超级XX X / 超级XX Y
+     -gmax                    → 超极巨XX
+     -alola/-galar/-hisui/…   → XX（阿罗拉的样子）
+     -f/-m                    → XX♀ / XX♂
+   拼不出来的后缀（又没有宝可梦名可译）就只译宝可梦名，其余原样保留。
+*/
+const PREFIX_FORM = {
+  mega:'超级', megax:'超级', megay:'超级',
+  primal:'原始', gmax:'超极巨',
 };
+const REGION_FORM = {
+  alola:'阿罗拉', galar:'伽勒尔', hisui:'洗翠', paldea:'帕底亚',
+  alolatotem:'阿罗拉', galartotem:'伽勒尔',
+};
+const SEX_FORM = { f:'♀', m:'♂' };
+const MARK_FORM = {
+  totem:'霸主', origin:'起源', therian:'灵兽', sky:'天空', land:'化身',
+  white:'白', black:'黑', resolute:'觉悟', pirouette:'舞步', blade:'刀剑', shield:'盾牌',
+  zen:'达摩', complete:'完全', unbound:'解放', eternal:'永恒', ash:'小智版',
+};
+
+function zhBase(key){
+  if(!S.zhById) return null;
+  if(S.zhById.has(key)) return S.zhById.get(key);
+  const parts = key.split('-');
+  while(parts.length > 1){
+    parts.pop();
+    const b = parts.join('-');
+    if(S.zhById.has(b)) return S.zhById.get(b);
+  }
+  return null;
+}
+
 function dispName(idOrName){
   const raw = String(idOrName || '');
   if(!raw) return '';
-  if((localStorage.getItem('lang') || 'zh') === 'en') return titleCase(raw);
-  if(!S.zhById) return titleCase(raw);
+  const lang = localStorage.getItem('lang') || 'zh';
+  if(lang === 'en') return titleCase(raw);
+
   const key = raw.toLowerCase().replace(/\s+/g, '-');
-  if(S.zhById.has(key)) return S.zhById.get(key);
-  // 形态：从右往左剥掉后缀，找到能翻译的基础名
-  const parts = key.split('-');
-  const tail = [];
-  while(parts.length > 1){
-    tail.unshift(parts.pop());
-    const base = parts.join('-');
-    if(S.zhById.has(base)){
-      return S.zhById.get(base) +
-        tail.map(t => FORM_SUFFIX[t] || ('·' + t.charAt(0).toUpperCase() + t.slice(1))).join('');
+  let zh = zhBase(key);
+  // 「Alolan Exeggutor」这类以地区开头的英文名
+  if(!zh){
+    const REGION_EN = { alolan:'阿罗拉', galarian:'伽勒尔', hisuian:'洗翠',
+                        paldean:'帕底亚', alola:'阿罗拉', galar:'伽勒尔' };
+    const words = raw.split(/\s+/);
+    if(words.length > 1){
+      const rg = REGION_EN[words[0].toLowerCase()];
+      if(rg){
+        const rest = zhBase(words.slice(1).join('-').toLowerCase());
+        if(rest) zh = rest;
+        if(rest) return `${rest}（${rg}的样子）`;
+      }
     }
   }
-  return titleCase(raw);
+  if(!zh) return titleCase(raw);        // 完全没有中文名 → 原样
+
+  const parts = key.split('-');
+  const base = key.split('-')[0];       // showdown id 的第一段就是宝可梦
+  const suffix = parts.slice(1);
+
+  let prefix = '', region = '', sex = '', extra = [], marks = '';
+  for(const t of suffix){
+    if(PREFIX_FORM[t] && !prefix){
+      prefix = PREFIX_FORM[t];
+      if(t === 'megax') marks += 'X';
+      if(t === 'megay') marks += 'Y';
+    } else if(REGION_FORM[t] && !region){
+      region = REGION_FORM[t];
+    } else if(SEX_FORM[t]){
+      sex = SEX_FORM[t];
+    } else if(MARK_FORM[t]){
+      extra.push(MARK_FORM[t] + '形态');
+    }
+    // 认不出的后缀忽略 —— 只保留宝可梦名
+  }
+  let out = (prefix || '') + zh + sex + marks;
+  if(!region && !extra.length) return out;
+  return out + '（' + [region ? region + '的样子' : '', extra.join('·')].filter(Boolean).join('·') + '）';
 }
+
 function setLang(l){
   localStorage.setItem('lang', l);
   renderSd(); renderCf(); renderOff(); renderPmdChips(); renderFav(); renderSet();
@@ -1496,7 +1565,10 @@ function closeRadial(){
 function toggleRadial(){ $('#radial').classList.contains('on') ? closeRadial() : openRadial(); }
 
 function showView(v){
+  if(v !== 'set') S.prevView = S.view;
   S.view = v;
+  const back = $('#btnBack');
+  if(back) back.style.display = v === 'set' ? 'block' : 'none';
   $$('.view').forEach(x=>x.classList.toggle('on', x.id === 'v-'+v));
   closeRadial();
   exitSel();
@@ -1507,6 +1579,26 @@ function showView(v){
     if(!P.cur) selectPmd(S.pmd.find(m=>m.name.replace(/_$/,'')==='Pikachu') || S.pmd[0]); }
   if(v==='fav') renderFav();
   if(v==='set') renderSet();
+}
+
+/* ---------------- 精灵球：下滑藏一半 ---------------- */
+function bindFabScroll(){
+  let last = 0;
+  const fab = $('#fab');
+  const onScroll = (el)=>{
+    el.addEventListener('scroll', ()=>{
+      const y = el.scrollTop;
+      if(y > last + 6 && y > 40){        // 往下滑 → 收起
+        fab.classList.add('hide');
+        closeRadial();
+      } else if(y < last - 6){           // 往上滑 → 露出
+        fab.classList.remove('hide');
+      }
+      last = y;
+    }, {passive:true});
+  };
+  $$('.view').forEach(onScroll);
+  $('#fab').addEventListener('click', ()=>fab.classList.remove('hide'), true);
 }
 
 /* ---------------- 捏合缩放调列数 ---------------- */
@@ -1634,11 +1726,13 @@ function syncSrcBtn(){
 
 function bind(){
   buildRadial();
+  bindFabScroll();
   $('#fab').onclick = (e)=>{ e.stopPropagation(); toggleRadial(); };
   document.addEventListener('click', (e)=>{
     if($('#radial').classList.contains('on') && !e.target.closest('#radial,#fab')) closeRadial();
   });
   $('#btnSet').onclick = ()=>showView('set');
+  $('#btnBack').onclick = ()=>showView(S.prevView && S.prevView !== 'set' ? S.prevView : 'showdown');
   bindPinchCols();
   bindExpand('sdExpand', 'sdChips', '全部分类 · 图鉴');
   bindExpand('cfExpand', 'cfChips', '全部分类 · 咖啡');
