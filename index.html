@@ -1,32 +1,3 @@
-async function loadPmdForm(){
-  const f = P.cur.forms[+$('#pmdForm').value];
-  let xml;
-  try{
-    const got = await fetchAny('pmd', pmdRel(P.cur.dex, f.p, 'AnimData.xml'), 8000);
-    xml = await got.res.text();
-  }catch(e){
-    P.actions=[]; P.action=null; $('#pmdAct').innerHTML='';
-    const cv = $('#cv'); cv.width=1; cv.height=1;
-    toast('动作数据加载失败：' + e.message + '（可换源再试）', 4200);
-    renderPmdPortraits();
-    return;
-  }
-  const doc = new DOMParser().parseFromString(xml,'application/xml');
-  const t = (n,tag)=>{ const e=n.querySelector(tag); return e?e.textContent.trim():''; };
-  P.actions = [...doc.querySelectorAll('Anims > Anim')].map(a=>({
-    name:t(a,'Name'), fw:+t(a,'FrameWidth'), fh:+t(a,'FrameHeight'),
-    durations:[...a.querySelectorAll('Durations > Duration')].map(d=>+d.textContent)
-  })).filter(a=>a.fw>0&&a.fh>0);
-  const as = $('#pmdAct'); as.innerHTML='';
-  P.actions.forEach((a,i)=>{ const o=document.createElement('option'); o.value=i;
-    o.textContent = a.name; as.appendChild(o); });
-  if(P.actions.length){
-    let i = P.actions.findIndex(a=>a.name==='Idle'); as.value = i>=0?i:0;
-    await loadPmdAction();
-  }
-  renderPmdPortraits();
-}
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -158,6 +129,22 @@ nav button.on{color:var(--acc2)}
   background:#1a222b;color:var(--fg);font-size:12.5px;font-family:inherit}
 
 /* toast */
+/* 宽屏（桌面浏览器）：网格铺开，手机端完全不受影响 */
+@media (min-width:900px){
+  #app{max-width:1440px;margin:0 auto;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(132px,1fr)) !important}
+  .card .box{height:124px;aspect-ratio:auto}
+  .chips{flex-wrap:wrap;overflow:visible}
+  #views{padding-bottom:16px}
+  nav{height:56px}
+  #selbar{max-width:1440px;left:50%;transform:translateX(-50%);width:100%;
+    bottom:calc(56px + var(--safe-b))}
+  #prog{max-width:900px;margin:0 auto;bottom:calc(56px + var(--safe-b) + 10px)}
+}
+@media (min-width:1280px){
+  .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr)) !important}
+  .card .box{height:140px}
+}
 .pstrip{display:flex;gap:8px;overflow-x:auto;padding:8px 12px;border-top:1px solid var(--line);
   background:var(--panel);scrollbar-width:none}
 .pstrip::-webkit-scrollbar{display:none}
@@ -797,6 +784,14 @@ async function probeBridge(){
   return nativeOK;
 }
 
+async function checkPerm(){
+  if(!nativeOK) return {native:false};
+  try{
+    const r = await fetch(BRIDGE + '__perm', {cache:'no-store'});
+    return await r.json();
+  }catch(e){ return {native:true, err:String(e)}; }
+}
+
 async function nativeSave(url, name){
   if(!nativeOK) return {ok:false, err:'no-bridge'};
   let id = null;
@@ -964,6 +959,8 @@ async function renderSet(){
     <div class="row"><div><div>内置 Café</div><div class="sub">${S.build ? S.build.cafeCount : S.cafe.length} 张 · ${S.build?S.build.cafeVersion:'—'}</div></div>
       <div class="val">—</div></div>
     <div class="row"><div><div>网格列数</div></div><div class="val" id="pickCols">${localStorage.getItem('cols')||3} 列</div></div>
+    <div class="row"><div><div>存储权限</div><div class="sub" id="permState">检测中…</div></div>
+      <div class="val" id="permAsk">申请</div></div>
     <div class="row"><div><div>存相册</div><div class="sub" id="brState">${nativeOK ? '原生通道已就绪（MediaStore，Android 10+ 免权限）' : '浏览器模式：走下载'}</div></div>
       <div class="val" id="brTest">自检</div></div>
   `;
@@ -977,6 +974,19 @@ async function renderSet(){
     if(S.view === 'pmd') loadPmdForm();
   };
   $('#doUpdate').onclick = checkUpdate;
+  checkPerm().then(p=>{
+    const elp = $('#permState'); if(!elp) return;
+    if(!p || p.native === false){ elp.textContent = '浏览器模式：不需要（走下载）'; $('#permAsk').style.display='none'; return; }
+    if(p.err){ elp.textContent = '查询失败：' + p.err; return; }
+    if(p.sdk >= 29){ elp.textContent = 'Android ' + p.sdk + ' · 不需要（MediaStore 免权限）'; $('#permAsk').style.display='none'; }
+    else if(p.granted){ elp.textContent = 'Android ' + p.sdk + ' · 已授权'; $('#permAsk').style.display='none'; }
+    else { elp.textContent = 'Android ' + p.sdk + ' · 未授权（保存会退到 App 私有目录）'; }
+  });
+  $('#permAsk').onclick = async ()=>{
+    await fetch(BRIDGE + '__reqperm').catch(()=>{});
+    toast('已发起权限申请，请看系统弹窗', 2500);
+    setTimeout(()=>renderSet(), 1500);
+  };
   $('#brTest').onclick = async ()=>{
     const first = S.cafe[0];
     if(!first){ toast('没有可测试的图'); return; }
