@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#12161c">
+<title>PokePic</title>
+<style>
+:root{
+  --bg:#0f1318; --panel:#171d24; --panel2:#1f2831; --line:#2a3542;
+  --fg:#e6edf5; --dim:#8b98a9; --acc:#4a9eff; --acc2:#ffb84a; --danger:#ff6b6b;
+  --nav:64px; --gr:3;
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-t:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--fg);
+  font:14px/1.5 -apple-system,"HarmonyOS Sans","Microsoft YaHei UI",system-ui,sans-serif;
+  overscroll-behavior:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
+
+/* ---------- 顶栏 ---------- */
+header{flex:none;padding:calc(var(--safe-t) + 8px) 12px 8px;background:var(--panel);
+  border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
+#q{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;
+  color:var(--fg);font-size:15px;padding:9px 12px;outline:none;font-family:inherit}
+#q:focus{border-color:var(--acc)}
+.iconbtn{flex:none;width:40px;height:40px;border-radius:10px;background:var(--panel2);
+  border:1px solid var(--line);color:var(--fg);font-size:16px;display:flex;align-items:center;
+  justify-content:center;cursor:pointer}
+.iconbtn:active{background:#2b3742}
+#btnMode{font-size:12px;width:auto;padding:0 10px;color:var(--dim)}
+
+/* ---------- 内容 ---------- */
+#views{flex:1;min-height:0;position:relative}
+.view{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding-bottom:calc(var(--nav) + var(--safe-b) + 12px);display:none}
+.view.on{display:block}
+
+/* chips */
+.chips{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;gap:8px;
+  overflow-x:auto;padding:8px 12px;border-bottom:1px solid var(--line);scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;padding:6px 12px;border-radius:16px;background:var(--panel2);border:1px solid var(--line);
+  font-size:12.5px;color:var(--dim);cursor:pointer;white-space:nowrap}
+.chip.on{background:#1d3852;border-color:var(--acc);color:#cfe4ff}
+
+/* 网格 */
+.grid{display:grid;grid-template-columns:repeat(var(--gr),1fr);gap:8px;padding:10px 12px}
+.card{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:12px;
+  overflow:hidden;cursor:pointer}
+.card .box{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;background:#0b0f13;
+  overflow:hidden}
+.card img{max-width:100%;max-height:100%;image-rendering:pixelated;opacity:0;transition:opacity .15s}
+.card img.ok{opacity:1}
+.card .cap{font-size:10.5px;color:var(--dim);padding:3px 6px 5px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;text-align:center;line-height:1.25}
+.card .cap b{color:var(--fg);font-weight:500}
+.card.sel{outline:2px solid var(--acc);outline-offset:-2px}
+.card .tick{position:absolute;top:6px;right:6px;width:22px;height:22px;border-radius:11px;
+  border:2px solid #ffffff90;background:#0009;display:none;align-items:center;justify-content:center;
+  font-size:13px;color:#fff}
+.card .tick.on{background:var(--acc);border-color:var(--acc)}
+.card.sel .tick{display:flex}
+#moreBtn{display:block;margin:6px auto 20px;padding:10px 26px;border-radius:20px;background:var(--panel2);
+  border:1px solid var(--line);color:var(--fg);font-size:13px}
+
+/* 列表（PMD / 设置） */
+.rows{padding:6px 12px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 4px;
+  border-bottom:1px solid var(--line);font-size:14.5px}
+.row:active{background:#ffffff08}
+.row .sub{color:var(--dim);font-size:12px}
+.row .val{color:var(--dim);font-size:12.5px}
+
+/* PMD 播放器 */
+#pmdStage{display:flex;flex-direction:column;height:100%}
+#pmdTop{display:flex;gap:8px;padding:10px 12px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line)}
+#pmdTop select{background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:8px;
+  padding:8px 10px;font-size:13px;font-family:inherit}
+#pmdCanvasWrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;
+  background-color:#0b0f13;
+  background-image:linear-gradient(45deg,#12171d 25%,transparent 25%,transparent 75%,#12171d 75%),
+                   linear-gradient(45deg,#12171d 25%,transparent 25%,transparent 75%,#12171d 75%);
+  background-size:22px 22px;background-position:0 0,11px 11px;overflow:hidden}
+#cv{image-rendering:pixelated;display:block}
+#pmdCtl{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--line);flex-wrap:wrap}
+#pmdCtl button{flex:1;min-width:64px;padding:12px 6px;border-radius:10px;background:var(--panel2);
+  border:1px solid var(--line);color:var(--fg);font-size:13px;font-family:inherit}
+#pmdCtl button.on{background:#1d3852;border-color:var(--acc);color:#cfe4ff}
+
+/* 底部导航 */
+nav{flex:none;height:calc(var(--nav) + var(--safe-b));padding-bottom:var(--safe-b);
+  display:flex;background:var(--panel);border-top:1px solid var(--line);position:relative;z-index:20}
+nav button{flex:1;background:none;border:0;color:var(--dim);font-size:11px;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer}
+nav button .ic{font-size:19px;line-height:1}
+nav button.on{color:var(--acc2)}
+
+/* 多选操作条 */
+#selbar{position:fixed;left:0;right:0;bottom:calc(var(--nav) + var(--safe-b));background:#101820;
+  border-top:1px solid var(--line);display:none;gap:6px;padding:8px 10px;z-index:30}
+#selbar.on{display:flex}
+#selbar button{flex:1;padding:11px 4px;border-radius:10px;border:1px solid var(--line);
+  background:var(--panel2);color:var(--fg);font-size:12.5px;font-family:inherit}
+#selbar button.primary{background:#1d3852;border-color:var(--acc);color:#cfe4ff}
+#selbar button:disabled{opacity:.4}
+
+/* 进度浮层 */
+#prog{position:fixed;left:12px;right:12px;bottom:calc(var(--nav) + var(--safe-b) + 8px);
+  background:#141b23;border:1px solid var(--line);border-radius:14px;padding:12px 14px;z-index:40;
+  display:none;box-shadow:0 8px 30px #0008}
+#prog.on{display:block}
+#prog .t{font-size:13px;margin-bottom:8px;display:flex;justify-content:space-between}
+#prog .bar{height:6px;border-radius:3px;background:#243040;overflow:hidden}
+#prog .bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .15s}
+
+/* 大图 */
+#zoom{position:fixed;inset:0;background:#000;z-index:60;display:none;
+  flex-direction:column;padding-top:calc(var(--safe-t) + 8px)}
+#zoom.on{display:flex}
+#zoomTop{display:flex;justify-content:space-between;padding:0 12px 8px;align-items:center;gap:8px}
+#zoomTop .name{font-size:13px;color:var(--dim);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#zoomBody{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;
+  touch-action:none}
+#zoomBody img{max-width:100%;max-height:100%;image-rendering:pixelated;transform-origin:center}
+#zoomBot{display:flex;gap:6px;padding:10px 12px calc(var(--safe-b) + 10px)}
+#zoomBot button{flex:1;padding:12px 4px;border-radius:10px;border:1px solid var(--line);
+  background:#1a222b;color:var(--fg);font-size:12.5px;font-family:inherit}
+
+/* toast */
+/* 宽屏（桌面浏览器）：网格铺开，手机端完全不受影响 */
+@media (min-width:900px){
+  #app{max-width:1440px;margin:0 auto;border-left:1px solid var(--line);border-right:1px solid var(--line)}
+  .grid{grid-template-columns:repeat(auto-fill,minmax(132px,1fr)) !important}
+  .card .box{height:124px;aspect-ratio:auto}
+  .chips{flex-wrap:wrap;overflow:visible}
+  #views{padding-bottom:16px}
+  nav{height:56px}
+  #selbar{max-width:1440px;left:50%;transform:translateX(-50%);width:100%;
+    bottom:calc(56px + var(--safe-b))}
+  #prog{max-width:900px;margin:0 auto;bottom:calc(56px + var(--safe-b) + 10px)}
+}
+@media (min-width:1280px){
+  .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr)) !important}
+  .card .box{height:140px}
+}
+.pstrip{display:flex;gap:8px;overflow-x:auto;padding:8px 12px;border-top:1px solid var(--line);
+  background:var(--panel);scrollbar-width:none}
+.pstrip::-webkit-scrollbar{display:none}
+.pcell{flex:none;width:62px;text-align:center;cursor:pointer}
+.pcell img{width:56px;height:56px;image-rendering:pixelated;background:#0b0f13;border-radius:8px;
+  border:1px solid var(--line)}
+.pcell span{display:block;font-size:9.5px;color:var(--dim);margin-top:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pmdLabel{font-size:11.5px;color:var(--dim);padding:6px 12px 0}
+#toast{position:fixed;left:50%;bottom:calc(var(--nav) + var(--safe-b) + 24px);transform:translateX(-50%);
+  background:#000c;color:#fff;padding:9px 16px;border-radius:20px;font-size:13px;z-index:80;
+  opacity:0;transition:opacity .2s;pointer-events:none;max-width:86vw;text-align:center}
+#toast.on{opacity:1}
+.muted{color:var(--dim);font-size:12.5px;padding:0 12px 10px}
+.empty{color:var(--dim);text-align:center;padding:60px 20px;font-size:13.5px}
+.sect{color:var(--dim);font-size:12px;padding:14px 12px 4px}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <input id="q" placeholder="搜索宝可梦 / 服装（支持中文）…" autocomplete="off" spellcheck="false">
+    <button class="iconbtn" id="btnMode" title="切换图片源">raw</button>
+  </header>
+
+  <div id="views">
+    <section class="view on" id="v-showdown">
+      <div class="chips" id="sdChips"></div>
+      <div class="grid" id="sdGrid"></div>
+    </section>
+
+    <section class="view" id="v-pmd">
+      <div class="chips" id="pmdChips"></div>
+      <div id="pmdStage">
+        <div id="pmdTop">
+          <select id="pmdForm"></select>
+          <select id="pmdAct"></select>
+          <select id="pmdDir"></select>
+        </div>
+        <div id="pmdCanvasWrap"><canvas id="cv" width="120" height="120"></canvas></div>
+        <div id="pmdCtl">
+          <button id="pmdPlay" class="on">暂停</button>
+          <button id="pmdShadow">影子</button>
+          <button id="pmdEight">8向</button>
+          <button id="pmdSave">保存</button>
+        </div>
+        <div id="pmdLabel">表情头像 · 点开可存相册，长按可多选</div>
+        <div class="pstrip" id="pmdPortraits"></div>
+      </div>
+    </section>
+
+    <section class="view" id="v-cafe">
+      <div class="chips" id="cfChips"></div>
+      <div class="grid" id="cfGrid"></div>
+    </section>
+
+    <section class="view" id="v-fav">
+      <div class="sect" id="favCount">收藏</div>
+      <div class="grid" id="favGrid"></div>
+    </section>
+
+    <section class="view" id="v-set">
+      <div class="rows" id="setRows"></div>
+      <div class="muted" id="about"></div>
+    </section>
+  </div>
+
+  <div id="selbar">
+    <button id="selAll">全选</button>
+    <button id="selFav">收藏</button>
+    <button id="selCache">缓存</button>
+    <button id="selSave" class="primary">存相册</button>
+    <button id="selExit">取消</button>
+  </div>
+
+  <div id="prog"><div class="t"><span id="progT">准备中…</span><span id="progN"></span></div>
+    <div class="bar"><i id="progBar"></i></div></div>
+
+  <nav>
+    <button data-view="showdown" class="on"><span class="ic">◈</span>图鉴</button>
+    <button data-view="pmd"><span class="ic">✧</span>迷宫</button>
+    <button data-view="cafe"><span class="ic">☕</span>咖啡</button>
+    <button data-view="fav"><span class="ic">♥</span>收藏</button>
+    <button data-view="set"><span class="ic">⚙</span>设置</button>
+  </nav>
+</div>
+
+<div id="zoom">
+  <div id="zoomTop"><div class="name" id="zoomName"></div>
+    <button class="iconbtn" id="zoomClose">✕</button></div>
+  <div id="zoomBody"><img id="zoomImg" alt=""></div>
+  <div id="zoomBot">
+    <button id="zoomFav">收藏</button>
+    <button id="zoomSave">存相册</button>
+    <button id="zoomShuffle">来一张</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* =====================================================================
+   PokePic —— 宝可梦贴图浏览
+   数据：data/*.json       图片：Showdown / PMD / PokeAPI CDN + 内置 Cafe
+   ===================================================================== */
+
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+/* 镜像列表：按顺序尝试，成功哪个就记住哪个（存 localStorage）。
+   raw.githubusercontent 在部分网络下会「挂起」而不是报错，所以每个请求必须带超时。 */
+const MIRRORS = [
+  { id:'raw',    label:'raw',
+    pmd:'https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/',
+    portrait:'https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/portrait/',
+    pk:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/' },
+  { id:'fastly', label:'fastly',
+    pmd:'https://fastly.jsdelivr.net/gh/PMDCollab/SpriteCollab@master/',
+    portrait:'https://fastly.jsdelivr.net/gh/PMDCollab/SpriteCollab@master/portrait/',
+    pk:'https://fastly.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/other/' },
+  { id:'jsd',    label:'jsd',
+    pmd:'https://cdn.jsdelivr.net/gh/PMDCollab/SpriteCollab@master/',
+    portrait:'https://cdn.jsdelivr.net/gh/PMDCollab/SpriteCollab@master/portrait/',
+    pk:'https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/other/' },
+];
+const M = () => MIRRORS[S.mirror] || MIRRORS[0];
+
+/** 带超时的 fetch：raw 这种会挂起的源，不设超时就会一直等。 */
+function fetchT(url, ms){
+  const ac = new AbortController();
+  const timer = setTimeout(() => { try { ac.abort(); } catch(e){} }, ms || 7000);
+  return fetch(url, {signal: ac.signal}).finally(() => clearTimeout(timer));
+}
+
+/** 依次尝试所有镜像，返回第一个成功的 {res, idx}。 */
+async function fetchAny(kind, rel, ms){
+  let lastErr = '未知错误';
+  const order = [S.mirror].concat(MIRRORS.map((_,i)=>i).filter(i=>i!==S.mirror));
+  for (const i of order){
+    const url = MIRRORS[i][kind] + rel;
+    try{
+      const r = await fetchT(url, ms);
+      if(!r.ok) { lastErr = 'HTTP ' + r.status; continue; }
+      if(i !== S.mirror){ S.mirror = i; localStorage.setItem('mirror', MIRRORS[i].id); }
+      return {res:r, idx:i, url};
+    }catch(e){
+      lastErr = (e && e.name === 'AbortError') ? '超时' : (e && e.message) || String(e);
+    }
+  }
+  throw new Error(lastErr);
+}
+
+/** 给 <img> 挂镜像兜底：当前源失败就换下一个。 */
+function imgFallback(img, kind, rel){
+  let tried = 0;
+  const order = [S.mirror].concat(MIRRORS.map((_,i)=>i).filter(i=>i!==S.mirror));
+  img.onerror = () => {
+    tried++;
+    if(tried >= order.length){ img.onerror = null;
+      const p = img.parentElement; if(p) p.innerHTML = '<span style="color:#4a5563;font-size:10px">无图</span>';
+      return; }
+    img.src = MIRRORS[order[tried]][kind] + rel;
+  };
+}
+
+const SD_BASE = 'https://play.pokemonshowdown.com/sprites/';
+const CAFE_BASE = 'PokemonCafeRemix/';
+
+const S = {
+  mirror:0,
+  subs:[], groups:[], nameMap:null, subIds:[], subCache:{},
+  pmd:[], official:[], zh:{},
+  cafe:[], cafeGroup:'',
+  view:'showdown', sub:'ani', query:'',
+  sel:new Set(), selMode:false,
+  build:null,
+  shown:120,
+};
+
+/* ---------------- 工具 ---------------- */
+const enc = p => String(p).split('/').map(encodeURIComponent).join('/');
+
+/* 中文名 → 英文 id。用户输入「皮卡丘」时先翻成 pikachu 再匹配；
+   支持「皮卡丘ex」这种中文前缀 + 英文后缀的混输。 */
+const hasCJK = s => /[\u3400-\u9fff\uf900-\ufaff]/.test(s);
+function zhToEn(q){
+  const raw = String(q || '').trim();
+  if (!raw || !hasCJK(raw)) return raw;
+  for (let n = raw.length; n >= 1; n--) {
+    const head = raw.slice(0, n);
+    const hit = S.zh[head];
+    if (hit) return hit + raw.slice(n);
+  }
+  return raw;
+}
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let toastT=0;
+function toast(msg, ms){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(()=>t.classList.remove('on'), ms||1600);
+}
+function fmtSize(n){ return n>1048576 ? (n/1048576).toFixed(1)+' MB' : Math.round(n/1024)+' KB'; }
+
+/* ---------------- IndexedDB ---------------- */
+const DB = {
+  db:null,
+  open(){
+    return new Promise((res,rej)=>{
+      const r = indexedDB.open('pokepic', 2);
+      r.onupgradeneeded = e => {
+        const d = e.target.result;
+        if(!d.objectStoreNames.contains('cache')) d.createObjectStore('cache',{keyPath:'url'});
+        if(!d.objectStoreNames.contains('fav')) d.createObjectStore('fav',{keyPath:'key'});
+        if(!d.objectStoreNames.contains('meta')) d.createObjectStore('meta',{keyPath:'k'});
+      };
+      r.onsuccess = e => { DB.db = e.target.result; res(DB.db); };
+      r.onerror = e => rej(e);
+    });
+  },
+  tx(store, mode){ return DB.db.transaction(store, mode||'readonly').objectStore(store); },
+  put(store, obj){ return new Promise((res,rej)=>{ const r=DB.tx(store,'readwrite').put(obj);
+    r.onsuccess=()=>res(true); r.onerror=()=>rej(r.error); }); },
+  get(store, key){ return new Promise((res)=>{ const r=DB.tx(store).get(key);
+    r.onsuccess=()=>res(r.result||null); r.onerror=()=>res(null); }); },
+  del(store, key){ return new Promise((res)=>{ const r=DB.tx(store,'readwrite').delete(key);
+    r.onsuccess=()=>res(true); r.onerror=()=>res(false); }); },
+  all(store){ return new Promise((res)=>{ const r=DB.tx(store).getAll();
+    r.onsuccess=()=>res(r.result||[]); r.onerror=()=>res([]); }); },
+  clear(store){ return new Promise((res)=>{ const r=DB.tx(store,'readwrite').clear();
+    r.onsuccess=()=>res(true); r.onerror=()=>res(false); }); },
+};
+
+/* ---------------- 数据加载 ---------------- */
+async function loadData(){
+  // 注意 BOM：PowerShell 的 Set-Content -Encoding utf8 会写 BOM，
+  // 浏览器里 JSON.parse 遇到它会直接抛错，所以统一先剥掉再解析。
+  const j = async u => {
+    const r = await fetch(u);
+    if(!r.ok) throw new Error(u + ' → ' + r.status);
+    const t = (await r.text()).replace(/^\uFEFF/, '');
+    return JSON.parse(t);
+  };
+  const [subs, names, pmd, official, cafe, zh] = await Promise.all([
+    j('data/subs.json'), j('data/names.json'), j('data/pmd.json'),
+    j('data/official.json'), j('data/cafe.json').catch(()=>[]),
+    j('data/zh.json').catch(()=>({})),
+  ]);
+  S.zh = zh || {};
+  S.subs = subs.subs; S.groups = subs.groups;
+  S.nameMap = names.map; S.subIds = names.subs;
+  S.pmd = pmd; S.official = official;
+  // 兼容两种 cafe.json：完整字段（打包版）与短字段（网页版旧数据）
+  S.cafe = (cafe||[]).map(x=>({
+    g: x.g != null ? x.g : x.group,
+    s: x.s != null ? x.s : (x.species||''),
+    o: x.o != null ? x.o : (x.outfit||''),
+    c: x.c != null ? x.c : (x.customer ? 1 : 0),
+    f: x.f != null ? x.f : x.file,
+    w: x.w, h: x.h
+  }));
+  S.build = await j('data/build.json').catch(()=>({appVersion:'1.0', cafeVersion:'', cafeCount:S.cafe.length}));
+}
+
+/* ---------------- 图片地址 ---------------- */
+function sdURL(sub, name){
+  const s = S.subs.find(x=>x.id===sub) || S.subs[0];
+  return SD_BASE + sub + '/' + encodeURIComponent(name) + (s ? s.ext : '.png');
+}
+const cafeURL = f => CAFE_BASE + enc(f);
+const pmdRel = (dex, path, tail) => 'sprite/' + dex + '/' + (path ? path + '/' : '') + tail;
+const pmdURL = (dex, path, action, kind) =>
+  M().pmd + pmdRel(dex, path, encodeURIComponent(action + '-' + (!kind||kind==='Anim' ? 'Anim' : 'Shadow') + '.png'));
+const pmdXmlURL = (dex, path) => M().pmd + pmdRel(dex, path, 'AnimData.xml');
+const PMD_EMOTIONS = ['Normal','Happy','Pain','Inspired','Surprised','Sad','Determined',
+                      'Teary-Eyed','Joyous','Angry','Worried','Stunned','Sigh','Shouting',
+                      'Dizzy','Crying','Special0','Special1'];
+const pmdPortraitRel = (dex, path, emo) => dex + '/' + (path ? path + '/' : '') + encodeURIComponent(emo) + '.png';
+const pmdPortraitURL = (dex, path, emo) => M().portrait + pmdPortraitRel(dex, path, emo);
+const offURL = (kind, shiny, id) => M().pk + kind + '/' + (shiny?'shiny/':'') + id + '.png';
+
+/* 缓存优先：有 blob 就用 blob，否则用原始地址 */
+async function srcFor(url){
+  try{
+    const row = await DB.get('cache', url);
+    if(row && row.blob) return URL.createObjectURL(row.blob);
+  }catch(e){}
+  return url;
+}
+
+/* ---------------- 网格渲染 ---------------- */
+function cardEl(opts){
+  // opts: {key, url, title, sub, onOpen}
+  const d = document.createElement('div');
+  d.className = 'card';
+  d.dataset.key = opts.key;
+  d.dataset.title = opts.title || '';
+  d.dataset.sub = opts.sub || '';
+  d.innerHTML = `<div class="box"></div><div class="cap"><b>${esc(opts.title)}</b>${
+      opts.sub ? '<br>'+esc(opts.sub) : ''}</div><div class="tick">✓</div>`;
+  const img = document.createElement('img');
+  img.loading = 'lazy'; img.decoding = 'async';
+  img.onload = () => img.classList.add('ok');
+  img.onerror = () => { const b=img.parentElement; if(b) b.innerHTML = '<span style="color:#4a5563;font-size:10px">无图</span>'; };
+  img.src = opts.url;
+  d.querySelector('.box').appendChild(img);
+  return d;
+}
+
+function bindGrid(grid, items, onOpen){
+  // 长按进入多选。踩过的坑：原来 pointermove 里无脑取消计时器，
+  // 手指一抖（安卓上 pointerdown 后几乎必来一次 1px 的 move）就永远触发不了。
+  // 现在改成「位移超过 12px 才取消」，并且长按后吃掉紧跟的那次 click。
+  let timer = null, sx = 0, sy = 0, suppress = false;
+  const clear = () => { if (timer) { clearTimeout(timer); timer = null; } };
+
+  grid.addEventListener('pointerdown', e => {
+    const c = e.target.closest('.card'); if (!c) return;
+    sx = e.clientX; sy = e.clientY; suppress = false;
+    clear();
+    timer = setTimeout(() => {
+      timer = null; suppress = true;
+      enterSel(c.dataset.key);
+      if (navigator.vibrate) { try { navigator.vibrate(18); } catch (err) {} }
+    }, 450);
+  }, {passive:true});
+
+  grid.addEventListener('pointermove', e => {
+    if (!timer) return;
+    if (Math.abs(e.clientX - sx) > 12 || Math.abs(e.clientY - sy) > 12) clear();
+  }, {passive:true});
+
+  grid.addEventListener('pointerup', clear, {passive:true});
+  grid.addEventListener('pointercancel', clear, {passive:true});
+  grid.addEventListener('pointerleave', clear, {passive:true});
+
+  grid.addEventListener('click', e => {
+    const c = e.target.closest('.card'); if (!c) return;
+    if (suppress) { suppress = false; return; }     // 长按后松开，别再当成点选
+    const key = c.dataset.key;
+    if (S.selMode) { toggleSel(key); return; }
+    onOpen && onOpen(key, c);
+  });
+}
+
+function toggleSel(key){
+  if(S.sel.has(key)) S.sel.delete(key); else S.sel.add(key);
+  syncSel();
+}
+function enterSel(key){
+  if(!S.selMode){ S.selMode = true; $('#selbar').classList.add('on'); }
+  S.sel.add(key); syncSel(); toast('已进入多选', 900);
+}
+function exitSel(){
+  S.selMode = false; S.sel.clear(); $('#selbar').classList.remove('on');
+  $$('.card.sel').forEach(c=>c.classList.remove('sel'));
+  $$('.card .tick').forEach(t=>t.classList.remove('on'));
+}
+function syncSel(){
+  $$('.card').forEach(c=>{
+    const on = S.sel.has(c.dataset.key);
+    c.classList.toggle('sel', on);
+    const t = c.querySelector('.tick'); if(t) t.classList.toggle('on', on);
+  });
+  $('#selAll').textContent = '全选';
+  $('#selbar').querySelectorAll('button').forEach(b=>{});
+}
+
+/* ---------------- 视图：图鉴 ---------------- */
+function renderSdChips(){
+  const box = $('#sdChips'); box.innerHTML = '';
+  for(const g of S.groups) for(const id of g.subs){
+    const s = S.subs.find(x=>x.id===id); if(!s) continue;
+    const b = document.createElement('div');
+    b.className = 'chip' + (id===S.sub?' on':'');
+    b.dataset.sub = id;
+    b.textContent = id;
+    b.onclick = ()=>{ S.sub = id; S.shown = 120; renderSd(); syncChip('#sdChips', id); };
+    box.appendChild(b);
+  }
+}
+function syncChip(sel, id){
+  $$(sel+' .chip').forEach(c=>c.classList.toggle('on', (c.dataset.sub||c.dataset.grp)===id));
+}
+
+let sdList = null;
+async function renderSd(){
+  const grid = $('#sdGrid'); grid.innerHTML = '';
+  if(!S.query){
+    if(!sdList || sdList.sub !== S.sub){
+      sdList = { sub:S.sub, names: await fetch('data/showdown/'+S.sub+'.json').then(r=>r.json()) };
+    }
+    const names = sdList.names;
+    const items = names.slice(0, S.shown);
+    const frag = document.createDocumentFragment();
+    for(const n of items) frag.appendChild(cardEl({key:'sd|'+S.sub+'|'+n, url:sdURL(S.sub,n), title:n}));
+    grid.appendChild(frag);
+    if(names.length > S.shown){
+      const b = document.createElement('button'); b.id='moreBtn';
+      b.textContent = `显示更多（${names.length - S.shown}）`;
+      b.onclick = ()=>{ S.shown += 120; renderSd(); };
+      grid.after(b);
+    } else { const old=$('#moreBtn'); if(old) old.remove(); }
+    grid._items = items;
+  } else {
+    const q = S.query;
+    const names = Object.keys(S.nameMap).filter(n=>n.includes(q)).slice(0, 300);
+    grid.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    for(const n of names){
+      const where = S.nameMap[n] || [];
+      const sub = where.length ? S.subIds[where[0]] : S.sub;
+      frag.appendChild(cardEl({key:'sd|'+sub+'|'+n, url:sdURL(sub,n), title:n,
+                               sub: where.length>1 ? where.length+' 个系列' : ''}));
+    }
+    grid.appendChild(frag);
+    const old=$('#moreBtn'); if(old) old.remove();
+    grid._items = names;
+  }
+  S.selMode && syncSel();
+}
+
+/* ---------------- 视图：Café ---------------- */
+function renderCfChips(){
+  const box = $('#cfChips'); box.innerHTML = '';
+  const mk = (id, label, n)=>{
+    const b = document.createElement('div');
+    b.className = 'chip' + (S.cafeGroup===id?' on':'');
+    b.dataset.grp = id; b.textContent = label + (n!=null?` ${n}`:'');
+    b.onclick = ()=>{ S.cafeGroup = id; S.shown = 120; renderCf(); syncChip('#cfChips', id); };
+    box.appendChild(b);
+  };
+  mk('', '全部', S.cafe.length);
+  mk('Artwork', '立绘', S.cafe.filter(r=>r.g==='Artwork').length);
+  mk('Portraits', '头像', S.cafe.filter(r=>r.g==='Portraits').length);
+  mk('customer', '顾客', S.cafe.filter(r=>r.c).length);
+}
+function renderCf(){
+  const grid = $('#cfGrid'); grid.innerHTML = '';
+  let list = S.cafe;
+  if(S.cafeGroup==='customer') list = list.filter(r=>r.c);
+  else if(S.cafeGroup) list = list.filter(r=>r.g===S.cafeGroup);
+  if(S.query) list = list.filter(r=>(r.s+' '+r.o+' '+r.f).toLowerCase().includes(S.query));
+  const frag = document.createDocumentFragment();
+  for(const r of list.slice(0, S.shown)){
+    frag.appendChild(cardEl({key:'cf|'+r.f, url:cafeURL(r.f), title:r.s||'?', sub:r.o}));
+  }
+  grid.appendChild(frag);
+  const old=$('#moreBtn'); if(old) old.remove();
+  if(list.length > S.shown){
+    const b = document.createElement('button'); b.id='moreBtn';
+    b.textContent = `显示更多（${list.length - S.shown}）`;
+    b.onclick = ()=>{ S.shown += 120; renderCf(); };
+    grid.after(b);
+  }
+  S.selMode && syncSel();
+}
+
+/* ---------------- 视图：PMD ---------------- */
+const PDIRS = ['下','右下','右','右上','上','左上','左','左下'];
+const P = { cur:null, forms:[], actions:[], action:null, anim:null, shadowImg:null,
+            frame:0, acc:0, last:0, playing:true, dir:0, eight:false, useShadow:false, reqId:0, zoom:4 };
+
+function renderPmdChips(){
+  const box = $('#pmdChips'); box.innerHTML='';
+  // 只显示前 60 个常用，其余靠搜索
+  const list = S.query ? S.pmd.filter(m=>m.name.toLowerCase().includes(S.query) || m.dex.includes(S.query))
+                       : S.pmd;
+  for(const m of list.slice(0, 80)){
+    const b = document.createElement('div');
+    b.className = 'chip' + (P.cur && P.cur.dex===m.dex ? ' on' : '');
+    b.dataset.sub = m.dex; b.textContent = m.name.replace(/_$/,'');
+    b.onclick = ()=>{ selectPmd(m); };
+    box.appendChild(b);
+  }
+}
+async function selectPmd(m){
+  P.cur = m;
+  const fsel = $('#pmdForm'); fsel.innerHTML='';
+  m.forms.forEach((f,i)=>{ const o=document.createElement('option'); o.value=i;
+    o.textContent = f.n || '基础'; fsel.appendChild(o); });
+  await loadPmdForm();
+  $$('#pmdChips .chip').forEach(c=>c.classList.toggle('on', c.dataset.sub===m.dex));
+}
+function renderPmdPortraits(){
+  const box = $('#pmdPortraits'); box.innerHTML = '';
+  if(!P.cur) return;
+  const f = P.cur.forms[+$('#pmdForm').value] || {n:'', p:''};
+  const frag = document.createDocumentFragment();
+  for(const emo of PMD_EMOTIONS){
+    const url = pmdPortraitURL(P.cur.dex, f.p, emo);
+    const name = `${P.cur.name}_${(f.n||'base')}_${emo}.png`;
+    const cell = document.createElement('div');
+    cell.className = 'pcell card';
+    cell.dataset.key = 'pmd|' + url + '|' + name;
+    cell.dataset.native = '1';
+    cell.innerHTML = `<img loading="lazy" src="${url}"><span>${emo}</span>`;
+    const im = cell.querySelector('img');
+    im.onload = () => im.classList.add('ok');    // .card img 默认 opacity:0
+    imgFallback(im, 'portrait', pmdPortraitRel(P.cur.dex, f.p, emo));
+    im.src = url;
+    frag.appendChild(cell);
+  }
+  box.appendChild(frag);
+  S.selMode && syncSel();
+}
+
+async function loadPmdForm(){
+  const f = P.cur.forms[+$('#pmdForm').value];
+  renderPmdPortraits();          // 先画表情条：它不依赖 AnimData.xml
+  let xml;
+  try{
+    const r = await fetch(pmdXmlURL(P.cur.dex, f.p));
+    if(!r.ok) throw new Error(r.status);
+    xml = await r.text();
+  }catch(e){
+    P.actions=[]; P.action=null; $('#pmdAct').innerHTML=''; toast('该形态没有动作数据');
+    renderPmdPortraits(); return;
+  }
+  const doc = new DOMParser().parseFromString(xml,'application/xml');
+  const t = (n,tag)=>{ const e=n.querySelector(tag); return e?e.textContent.trim():''; };
+  P.actions = [...doc.querySelectorAll('Anims > Anim')].map(a=>({
+    name:t(a,'Name'), fw:+t(a,'FrameWidth'), fh:+t(a,'FrameHeight'),
+    durations:[...a.querySelectorAll('Durations > Duration')].map(d=>+d.textContent)
+  })).filter(a=>a.fw>0&&a.fh>0);
+  const as = $('#pmdAct'); as.innerHTML='';
+  P.actions.forEach((a,i)=>{ const o=document.createElement('option'); o.value=i;
+    o.textContent = a.name; as.appendChild(o); });
+  if(P.actions.length){
+    let i = P.actions.findIndex(a=>a.name==='Idle'); as.value = i>=0?i:0;
+    await loadPmdAction();
+  }
+  renderPmdPortraits();
+}
+function pimg(src){ return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i);
+  i.onerror=()=>rej(new Error(src)); i.src=src; }); }
+
+/** 动作图按镜像顺序试，成功就记住那个源。 */
+async function pmdImg(dex, path, action, kind){
+  let lastErr = null;
+  const order = [S.mirror].concat(MIRRORS.map((_,i)=>i).filter(i=>i!==S.mirror));
+  for(const i of order){
+    try{
+      const im = await pimg(MIRRORS[i].pmd + pmdRel(dex, path,
+        encodeURIComponent(action + '-' + kind + '.png')));
+      if(i !== S.mirror){ S.mirror = i; localStorage.setItem('mirror', MIRRORS[i].id); }
+      return im;
+    }catch(e){ lastErr = e; }
+  }
+  throw lastErr || new Error('no mirror');
+}
+async function loadPmdAction(){
+  const f = P.cur.forms[+$('#pmdForm').value];
+  const a = P.actions[+$('#pmdAct').value];
+  if(!f||!a) return;
+  const token = ++P.reqId;
+  P.action = a; P.frame = 0; P.acc = 0;
+  try{
+    const jobs = [pmdImg(P.cur.dex, f.p, a.name, 'Anim')];
+    jobs.push(P.useShadow ? pmdImg(P.cur.dex, f.p, a.name, 'Shadow').catch(()=>null) : null);
+    const [anim, sh] = await Promise.all(jobs);
+    if(token!==P.reqId) return;
+    P.anim = anim; P.shadowImg = sh;
+    drawPmd();
+  }catch(e){ P.anim=null; toast('缺少 '+a.name+'-Anim.png'); }
+}
+function drawPmd(){
+  const cv = $('#cv'), ctx = cv.getContext('2d');
+  const a = P.action;
+  if(!a||!P.anim){ cv.width=1; cv.height=1; return; }
+  const maxW = $('#pmdCanvasWrap').clientWidth - 24;
+  const maxH = $('#pmdCanvasWrap').clientHeight - 24;
+  const z = Math.max(1, Math.min(P.zoom, Math.floor(maxW/a.fw), Math.floor(maxH/a.fh)));
+  const w = a.fw*z, h = a.fh*z;
+  cv.width=w; cv.height=h;
+  ctx.imageSmoothingEnabled = false;
+  ctx.clearRect(0,0,w,h);
+  if(P.useShadow && P.shadowImg){ ctx.globalAlpha=.4;
+    ctx.drawImage(P.shadowImg, P.frame*a.fw, P.dir*a.fh, a.fw, a.fh, 0,0,w,h); ctx.globalAlpha=1; }
+  ctx.drawImage(P.anim, P.frame*a.fw, P.dir*a.fh, a.fw, a.fh, 0,0,w,h);
+}
+function pmdLoop(t){
+  requestAnimationFrame(pmdLoop);
+  const a = P.action;
+  if(!a||!P.anim||!P.playing||S.view!=='pmd') return;
+  const dt = P.last ? (t-P.last)/1000 : 0; P.last = t;
+  let ch = false; P.acc += dt*60; let g=0;
+  while(P.acc >= (a.durations[P.frame]??1) && g++<60){
+    P.acc -= (a.durations[P.frame]??1);
+    P.frame = (P.frame+1) % a.durations.length; ch = true;
+  }
+  if(ch) drawPmd();
+}
+
+/* ---------------- 视图：收藏 ---------------- */
+async function renderFav(){
+  const rows = await DB.all('fav');
+  rows.sort((a,b)=>(b.ts||0)-(a.ts||0));
+  $('#favCount').textContent = `收藏 ${rows.length}`;
+  const grid = $('#favGrid'); grid.innerHTML='';
+  if(!rows.length){
+    grid.innerHTML = '<div class="empty">还没有收藏。<br>长按图片进入多选，点「收藏」。</div>';
+    return;
+  }
+  const frag = document.createDocumentFragment();
+  for(const r of rows){
+    frag.appendChild(cardEl({key:'fav|'+r.key, url:r.url, title:r.title, sub:r.sub}));
+  }
+  grid.appendChild(frag);
+  grid._rows = rows;
+}
+
+/* ---------------- 保存 / 缓存 / 进度 ---------------- */
+function progShow(title){ $('#prog').classList.add('on'); $('#progT').textContent = title||'处理中'; $('#progN').textContent='0/0'; $('#progBar').style.width='0%'; }
+function progSet(done,total,title){
+  $('#progN').textContent = done+'/'+total;
+  $('#progBar').style.width = total ? (done*100/total)+'%' : '0%';
+  if(title) $('#progT').textContent = title;
+}
+function progHide(){ setTimeout(()=>$('#prog').classList.remove('on'), 700); }
+
+/* 原生保存桥（APK 外壳注入；浏览器里没有就走下载）
+   走的是 shouldInterceptRequest 拦截的 https://app.local/__save，不用 evaluateJavascript。
+   —— 旧实现在部分 WebView 上拿不到回调，表现为「点了保存卡住」，所以改掉了。 */
+const BRIDGE = 'https://app.local/';
+let nativeOK = false;
+let lastSaveErr = '';
+
+async function probeBridge(){
+  try{
+    const r = await Promise.race([
+      fetch(BRIDGE + '__ping', {cache:'no-store'}),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 1500)),
+    ]);
+    const j = await r.json();
+    nativeOK = !!(j && j.native);
+  }catch(e){ nativeOK = false; }
+  return nativeOK;
+}
+
+async function checkPerm(){
+  if(!nativeOK) return {native:false};
+  try{
+    const r = await fetch(BRIDGE + '__perm', {cache:'no-store'});
+    return await r.json();
+  }catch(e){ return {native:true, err:String(e)}; }
+}
+
+async function nativeSave(url, name){
+  if(!nativeOK) return {ok:false, err:'no-bridge'};
+  let id = null;
+  try{
+    const r = await fetch(BRIDGE + '__save?name=' + encodeURIComponent(name) +
+                          '&url=' + encodeURIComponent(url), {cache:'no-store'});
+    const j = await r.json();
+    if(!j || !j.id) return {ok:false, err:(j && j.msg) || '派发失败'};
+    id = j.id;
+  }catch(e){ return {ok:false, err:'桥不可用: ' + e.message}; }
+
+  for(let i=0;i<180;i++){                 // 最多等 72 秒
+    await new Promise(r=>setTimeout(r,400));
+    try{
+      const st = await (await fetch(BRIDGE + '__status?id=' + id, {cache:'no-store'})).json();
+      if(st.state === 'ok') return {ok:true, path:st.msg};
+      if(st.state === 'err') return {ok:false, err:st.msg || '写入失败'};
+    }catch(e){}
+  }
+  return {ok:false, err:'超时'};
+}
+
+async function saveOne(item){
+  const r = await nativeSave(item.url, item.name);
+  if(r.ok) return true;
+  if(r.err === 'no-bridge'){
+    const a = document.createElement('a');
+    a.href = item.url; a.download = item.name; document.body.appendChild(a); a.click(); a.remove();
+    return true;
+  }
+  if(!lastSaveErr) lastSaveErr = r.err;
+  return false;
+}
+
+async function doSave(items){
+  if(!items.length) return;
+  lastSaveErr = '';
+  progShow('保存到相册');
+  let ok=0;
+  for(let i=0;i<items.length;i++){
+    const r = await saveOne(items[i]);
+    if(r) ok++;
+    progSet(i+1, items.length, `保存到相册（${ok} 成功）`);
+  }
+  progHide();
+  if(ok === items.length) toast(`已保存 ${ok} 张`);
+  else if(ok === 0) toast('保存失败：' + (lastSaveErr || '未知原因'), 4200);
+  else toast(`已保存 ${ok}/${items.length}，失败原因：${lastSaveErr}`, 4200);
+}
+
+async function doCache(items){
+  if(!items.length) return;
+  progShow('缓存到本地');
+  let ok=0, bytes=0;
+  for(let i=0;i<items.length;i++){
+    const it = items[i];
+    try{
+      const exists = await DB.get('cache', it.url);
+      if(!exists){
+        const r = await fetch(it.url);
+        if(!r.ok) throw new Error(r.status);
+        const b = await r.blob();
+        bytes += b.size;
+        await DB.put('cache', {url:it.url, blob:b, ts:Date.now(), size:b.size});
+      }
+      ok++;
+    }catch(e){}
+    progSet(i+1, items.length, `缓存到本地（${ok} 张 / ${fmtSize(bytes)}）`);
+  }
+  progHide();
+  toast(`已缓存 ${ok}/${items.length} 张`);
+}
+
+/* 多选条目 → {url,name} */
+function selItems(){
+  const out = [];
+  for(const key of S.sel){
+    const [kind, ...rest] = key.split('|');
+    if(kind==='sd'){
+      const [sub, name] = [rest[0], rest[1]];
+      out.push({url:sdURL(sub,name), name:name+ (S.subs.find(x=>x.id===sub)?.ext||'.png')});
+    } else if(kind==='cf'){
+      const f = rest.join('|');
+      const r = S.cafe.find(x=>x.f===f);
+      out.push({url:cafeURL(f), name:(r && r.s ? r.s+' '+(r.o||'') : f.split('/').pop())});
+    } else if(kind==='fav'){
+      const rk = rest.join('|');
+      const rows = ($('#favGrid')._rows||[]);
+      const row = rows.find(x=>x.key===rk);
+      if(row) out.push({url:row.url, name:row.title+' '+(row.sub||'')});
+    } else if(kind==='pmd'){
+      const url = rest[0];
+      const fname = rest.slice(1).join('|') || 'pmd.png';
+      out.push({url, name:fname});
+    }
+  }
+  return out;
+}
+
+/* ---------------- 大图 ---------------- */
+let zoomItem = null;
+let zoomScale = 1;
+
+function buildZoomList(){
+  const cards = [...document.querySelectorAll('.view.on .card')];
+  return cards.map(c => ({
+    url: (c.querySelector('img') || {}).src || '',
+    title: c.dataset.title || '',
+    sub: c.dataset.sub || ''
+  })).filter(x => x.url && x.url.indexOf('data:') !== 0);
+}
+
+async function openZoom(url, title, sub){
+  S.zoomList = buildZoomList();
+  S.zoomIdx = S.zoomList.findIndex(x => x.url === url);
+  if(S.zoomIdx < 0){
+    S.zoomList.unshift({url, title:title||'', sub:sub||''});
+    S.zoomIdx = 0;
+  }
+  $('#zoom').classList.add('on');
+  await showZoom();
+}
+
+async function showZoom(){
+  const it = S.zoomList[S.zoomIdx];
+  if(!it) return;
+  zoomItem = it;
+  const total = S.zoomList.length;
+  $('#zoomName').textContent = (it.title || '') + (it.sub ? ' · ' + it.sub : '') +
+    (total > 1 ? `   ${S.zoomIdx + 1}/${total}` : '');
+  const img = $('#zoomImg');
+  zoomScale = 1; img.style.transform = 'scale(1)';
+  img.src = await srcFor(it.url);
+  try{
+    const rows = await DB.all('fav');
+    $('#zoomFav').textContent = rows.some(r => r.url === it.url) ? '已收藏' : '收藏';
+  }catch(e){}
+  // 预加载邻居，滑动时不空白
+  for(const d of [1, -1]){
+    const n = S.zoomList[(S.zoomIdx + d + total) % total];
+    if(n && n.url && n.url !== it.url){ const im = new Image(); im.src = n.url; }
+  }
+}
+
+function shiftZoom(d){
+  if(!S.zoomList || S.zoomList.length < 2) return;
+  S.zoomIdx = (S.zoomIdx + d + S.zoomList.length) % S.zoomList.length;
+  showZoom();
+}
+
+/* ---------------- 设置 ---------------- */
+async function renderSet(){
+  const cacheRows = await DB.all('cache');
+  const cacheSize = cacheRows.reduce((a,r)=>a+(r.size||0),0);
+  const favRows = await DB.all('fav');
+  $('#setRows').innerHTML = `
+    <div class="row"><div><div>图片缓存</div><div class="sub">${cacheRows.length} 张 · ${fmtSize(cacheSize)}</div></div>
+      <div class="val" id="clearCache">清空</div></div>
+    <div class="row"><div><div>收藏</div><div class="sub">${favRows.length} 条</div></div>
+      <div class="val" id="clearFav">清空</div></div>
+    <div class="row"><div><div>图片源</div><div class="sub">raw / fastly / jsd · 失败自动换</div></div>
+      <div class="val" id="pickSrc">${M().label}</div></div>
+    <div class="row"><div><div>检查更新</div><div class="sub">从 GitHub 拉最新素材</div></div>
+      <div class="val" id="doUpdate">检查</div></div>
+    <div class="row"><div><div>内置 Café</div><div class="sub">${S.build ? S.build.cafeCount : S.cafe.length} 张 · ${S.build?S.build.cafeVersion:'—'}</div></div>
+      <div class="val">—</div></div>
+    <div class="row"><div><div>网格列数</div></div><div class="val" id="pickCols">${localStorage.getItem('cols')||3} 列</div></div>
+    <div class="row"><div><div>存储权限</div><div class="sub" id="permState">检测中…</div></div>
+      <div class="val" id="permAsk">申请</div></div>
+    <div class="row"><div><div>存相册</div><div class="sub" id="brState">${nativeOK ? '原生通道已就绪（MediaStore，Android 10+ 免权限）' : '浏览器模式：走下载'}</div></div>
+      <div class="val" id="brTest">自检</div></div>
+  `;
+  $('#clearCache').onclick = async()=>{ await DB.clear('cache'); toast('缓存已清空'); renderSet(); };
+  $('#clearFav').onclick = async()=>{ await DB.clear('fav'); toast('收藏已清空'); renderFav(); renderSet(); };
+  $('#pickSrc').onclick = ()=>{
+    S.mirror = (S.mirror + 1) % MIRRORS.length;
+    localStorage.setItem('mirror', MIRRORS[S.mirror].id);
+    $('#btnMode').textContent = M().label; renderSet();
+    toast('图片源：' + M().label + (S.mirror ? '' : '（可能挂起）'));
+    if(S.view === 'pmd') loadPmdForm();
+  };
+  $('#doUpdate').onclick = checkUpdate;
+  checkPerm().then(p=>{
+    const elp = $('#permState'); if(!elp) return;
+    if(!p || p.native === false){ elp.textContent = '浏览器模式：不需要（走下载）'; $('#permAsk').style.display='none'; return; }
+    if(p.err){ elp.textContent = '查询失败：' + p.err; return; }
+    if(p.sdk >= 29){ elp.textContent = 'Android ' + p.sdk + ' · 不需要（MediaStore 免权限）'; $('#permAsk').style.display='none'; }
+    else if(p.granted){ elp.textContent = 'Android ' + p.sdk + ' · 已授权'; $('#permAsk').style.display='none'; }
+    else { elp.textContent = 'Android ' + p.sdk + ' · 未授权（保存会退到 App 私有目录）'; }
+  });
+  $('#permAsk').onclick = async ()=>{
+    await fetch(BRIDGE + '__reqperm').catch(()=>{});
+    toast('已发起权限申请，请看系统弹窗', 2500);
+    setTimeout(()=>renderSet(), 1500);
+  };
+  $('#brTest').onclick = async ()=>{
+    const first = S.cafe[0];
+    if(!first){ toast('没有可测试的图'); return; }
+    toast('正在保存一张测试图…', 1200);
+    const r = await nativeSave(cafeURL(first.f), 'PokePic 自检.png');
+    toast(r.ok ? '成功，已存到相册' : ('失败：' + r.err), 5000);
+  };
+  $('#pickCols').onclick = ()=>{ let c = (+localStorage.getItem('cols')||3)+1; if(c>4) c=2;
+    localStorage.setItem('cols',c); document.documentElement.style.setProperty('--gr',c);
+    $('#pickCols').textContent = c+' 列'; renderSd(); renderCf(); };
+  $('#about').innerHTML = `PokePic ${S.build?S.build.appVersion:'1.0'} · 数据来自 Showdown / PMD Collab / PokeAPI<br>
+    素材版权归 The Pokémon Company，仅供个人查阅。<br><br>作者：ACMinerva`;
+}
+
+/* 从 GitHub 检查更新：Café 增量 + 数据刷新 */
+async function checkUpdate(){
+  progShow('检查更新');
+  try{
+    const base = 'https://sgorgeous.github.io/pokemon-sprite/';
+    const r = await fetch(base + 'update.json?t=' + Date.now(), {cache:'no-store'});
+    if(!r.ok) throw new Error('update.json ' + r.status);
+    const up = await r.json();
+    const cur = S.build || {};
+    if(up.cafeVersion && up.cafeVersion !== cur.cafeVersion){
+      // 拉新的 index，把不认识的图补进缓存
+      const idx = await (await fetch(base + 'PokemonCafeRemix/index.json?t=' + Date.now(), {cache:'no-store'})).json();
+      const known = new Set(S.cafe.map(x=>x.f));
+      const fresh = idx.map(x=>({g:x.group,s:x.species||'',o:x.outfit||'',c:x.customer?1:0,f:x.file,w:x.w,h:x.h}))
+                       .filter(x=>!known.has(x.f));
+      if(fresh.length){
+        progSet(0, fresh.length, `新增 ${fresh.length} 张，下载中`);
+        let ok=0;
+        for(let i=0;i<fresh.length;i++){
+          try{
+            const u = base + CAFE_BASE + enc(fresh[i].f);
+            const resp = await fetch(u);
+            if(resp.ok){
+              const b = await resp.blob();
+              await DB.put('cache', {url:cafeURL(fresh[i].f), blob:b, ts:Date.now(), size:b.size});
+              ok++;
+            }
+          }catch(e){}
+          progSet(i+1, fresh.length, `下载新素材（${ok}/${fresh.length}）`);
+        }
+        S.cafe = S.cafe.concat(fresh);
+        localStorage.setItem('cafeExtra', JSON.stringify(fresh));
+        try{ await DB.put('meta', {k:'cafeVersion', v:up.cafeVersion}); }catch(e){}
+        renderCf(); renderSet();
+        progHide();
+        toast(`已更新 ${fresh.length} 张新素材`);
+        return;
+      }
+      S.cafe = idx.map(x=>({g:x.group,s:x.species||'',o:x.outfit||'',c:x.customer?1:0,f:x.file,w:x.w,h:x.h}));
+      localStorage.setItem('cafeExtra', '[]');
+      progHide(); toast('素材索引已刷新'); renderCf(); return;
+    }
+    progHide();
+    toast(up.apkVersion && up.apkVersion !== (cur.appVersion||'1.0')
+      ? '有新版本 APK：' + up.apkUrl
+      : '已是最新');
+  }catch(e){
+    progHide();
+    toast('检查失败：' + e.message);
+  }
+}
+
+/* ---------------- 视图切换 ---------------- */
+function showView(v){
+  S.view = v;
+  $$('.view').forEach(x=>x.classList.toggle('on', x.id === 'v-'+v));
+  $$('nav button').forEach(b=>b.classList.toggle('on', b.dataset.view===v));
+  exitSel();
+  if(v==='showdown') renderSd();
+  if(v==='cafe') renderCf();
+  if(v==='pmd'){ renderPmdChips();
+    if(!P.cur) selectPmd(S.pmd.find(m=>m.name.replace(/_$/,'')==='Pikachu') || S.pmd[0]); }
+  if(v==='fav') renderFav();
+  if(v==='set') renderSet();
+}
+
+/* ---------------- 事件绑定 ---------------- */
+function bind(){
+  $$('nav button').forEach(b=>b.onclick = ()=>showView(b.dataset.view));
+
+  let qt=0;
+  $('#q').addEventListener('input', e=>{
+    clearTimeout(qt);
+    qt = setTimeout(()=>{
+      S.query = zhToEn(e.target.value).trim().toLowerCase();
+      S.shown = 120;
+      if(S.view==='showdown') renderSd();
+      else if(S.view==='cafe') renderCf();
+      else if(S.view==='pmd') renderPmdChips();
+    }, 220);
+  });
+
+  $('#btnMode').onclick = ()=>{
+    S.mirror = (S.mirror + 1) % MIRRORS.length;
+    localStorage.setItem('mirror', MIRRORS[S.mirror].id);
+    $('#btnMode').textContent = M().label;
+    toast('图片源：' + M().label + (S.mirror ? '' : '（可能挂起）'));
+    if(S.view==='pmd') loadPmdForm();
+  };
+
+  // 网格点击
+  bindGrid($('#sdGrid'), null, (key,c)=>{
+    const [,sub,name] = key.split('|');
+    openZoom(sdURL(sub,name), name);
+  });
+  bindGrid($('#cfGrid'), null, (key)=>{
+    const f = key.slice(3);
+    const r = S.cafe.find(x=>x.f===f);
+    openZoom(cafeURL(f), r?r.s:'', r?r.o:'');
+  });
+  bindGrid($('#pmdPortraits'), null, (key)=>{
+    const url = key.split('|')[1];
+    const nm = key.split('|').slice(2).join('|');
+    openZoom(url, nm.replace(/\.png$/,''), 'PMD 表情');
+  });
+  bindGrid($('#favGrid'), null, async (key)=>{
+    const rk = key.slice(4);
+    const row = ($('#favGrid')._rows||[]).find(x=>x.key===rk);
+    if(row) openZoom(row.url, row.title, row.sub);
+  });
+
+  // 多选
+  $('#selExit').onclick = exitSel;
+  $('#selAll').onclick = ()=>{
+    const cards = [...document.querySelectorAll('.view.on .card')];
+    const all = cards.length && cards.every(c=>S.sel.has(c.dataset.key));
+    S.sel.clear();
+    if(!all) cards.forEach(c=>S.sel.add(c.dataset.key));
+    syncSel();
+  };
+  $('#selFav').onclick = async ()=>{
+    const items = selItems();
+    if(!items.length) return toast('没选中');
+    for(const it of items){
+      await DB.put('fav', {key:it.url, url:it.url, title:it.name, sub:'', ts:Date.now()});
+      await DB.put('cache', await makeCacheRow(it.url)).catch(()=>{});
+    }
+    toast(`已收藏 ${items.length} 条`); exitSel();
+  };
+  $('#selCache').onclick = async ()=>{ await doCache(selItems()); exitSel(); };
+  $('#selSave').onclick = async ()=>{ await doSave(selItems()); exitSel(); };
+
+  // PMD 控件
+  $('#pmdForm').onchange = loadPmdForm;
+  $('#pmdAct').onchange = loadPmdAction;
+  const dsel = $('#pmdDir'); PDIRS.forEach((d,i)=>{ const o=document.createElement('option');
+    o.value=i; o.textContent=i+' · '+d; dsel.appendChild(o); });
+  dsel.onchange = ()=>{ P.dir = +dsel.value; P.frame=0; P.acc=0; drawPmd(); };
+  $('#pmdPlay').onclick = ()=>{ P.playing=!P.playing; $('#pmdPlay').textContent = P.playing?'暂停':'播放';
+    $('#pmdPlay').classList.toggle('on', P.playing); };
+  $('#pmdShadow').onclick = ()=>{ P.useShadow=!P.useShadow;
+    $('#pmdShadow').classList.toggle('on',P.useShadow); loadPmdAction(); };
+  $('#pmdEight').onclick = ()=>{ P.eight=!P.eight; $('#pmdEight').classList.toggle('on',P.eight);
+    if(P.eight) toast('8 向：用方向下拉切换', 1200); };
+  $('#pmdSave').onclick = async ()=>{
+    const f = P.cur.forms[+$('#pmdForm').value];
+    const a = P.action; if(!a) return;
+    await doSave([{url:pmdURL(P.cur.dex,f.p,a.name,'Anim'),
+                   name:`${P.cur.name}_${f.n||'base'}_${a.name}.png`}]);
+  };
+
+  // 大图
+  $('#zoomClose').onclick = ()=>$('#zoom').classList.remove('on');
+  $('#zoomSave').onclick = async ()=>{ if(zoomItem) await doSave([{url:zoomItem.url,
+    name:(zoomItem.title||'pokepic')+(zoomItem.sub?' '+(zoomItem.sub||''):'')+'.png'}]); };
+  $('#zoomFav').onclick = async ()=>{
+    if(!zoomItem) return;
+    const rows = await DB.all('fav');
+    if(rows.some(r=>r.url===zoomItem.url)){
+      await DB.del('fav', zoomItem.url); $('#zoomFav').textContent='收藏'; toast('已取消收藏');
+    }else{
+      await DB.put('fav', {key:zoomItem.url, url:zoomItem.url, title:zoomItem.title,
+                           sub:zoomItem.sub||'', ts:Date.now()});
+      $('#zoomFav').textContent='已收藏'; toast('已收藏');
+    }
+  };
+  $('#zoomShuffle').onclick = ()=>{
+    if(S.zoomList && S.zoomList.length > 1){ shiftZoom(1); return; }
+    const cards = [...document.querySelectorAll('.view.on .card')];
+    if(!cards.length) return;
+    const c = cards[Math.floor(Math.random()*cards.length)];
+    const img = c.querySelector('img');
+    if(img && img.src){ $('#zoomImg').src = img.src; $('#zoomName').textContent = c.querySelector('.cap b')?.textContent||''; }
+  };
+  // 双指缩放 + 单指左右滑动切换
+  let dist0=0, startScale=1, swx=0, swy=0, swOn=false;
+  const zimg = $('#zoomImg');
+  $('#zoomBody').addEventListener('touchstart', e=>{
+    if(e.touches.length===2){
+      swOn = false;
+      dist0 = Math.hypot(e.touches[0].clientX-e.touches[1].clientX,
+                         e.touches[0].clientY-e.touches[1].clientY);
+      startScale = zoomScale;
+    } else if(e.touches.length===1){
+      swx = e.touches[0].clientX; swy = e.touches[0].clientY; swOn = true;
+    }
+  }, {passive:true});
+  $('#zoomBody').addEventListener('touchmove', e=>{
+    if(e.touches.length===2 && dist0){
+      e.preventDefault();
+      const d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX,
+                           e.touches[0].clientY-e.touches[1].clientY);
+      zoomScale = Math.min(6, Math.max(1, startScale * d / dist0));
+      zimg.style.transform = `scale(${zoomScale})`;
+    }
+  }, {passive:false});
+  $('#zoomBody').addEventListener('touchend', e=>{
+    if(swOn && e.changedTouches && e.changedTouches.length){
+      const t = e.changedTouches[0];
+      const dx = t.clientX - swx, dy = t.clientY - swy;
+      if(Math.abs(dx) > 60 && Math.abs(dy) < 100 && zoomScale < 1.05){
+        shiftZoom(dx < 0 ? 1 : -1);      // 往左滑 = 下一张
+      }
+    }
+    swOn = false;
+    if(zoomScale < 1.05){ zoomScale = 1; zimg.style.transform = 'scale(1)'; }
+  });
+
+  // 返回键：退出大图 / 退出多选
+  window.addEventListener('popstate', ()=>{
+    if($('#zoom').classList.contains('on')){ $('#zoom').classList.remove('on'); history.pushState(null,'',location.href); }
+    else if(S.selMode){ exitSel(); history.pushState(null,'',location.href); }
+  });
+  history.pushState(null,'',location.href);
+}
+
+async function makeCacheRow(url){
+  try{
+    const r = await fetch(url); if(!r.ok) return {url, blob:null, ts:Date.now(), size:0};
+    const b = await r.blob();
+    return {url, blob:b, ts:Date.now(), size:b.size};
+  }catch(e){ return {url, blob:null, ts:Date.now(), size:0}; }
+}
+
+/* ---------------- 启动 ---------------- */
+(async function boot(){
+  try{
+    const savedMirror = localStorage.getItem('mirror') || 'fastly';
+    S.mirror = Math.max(0, MIRRORS.findIndex(m => m.id === savedMirror));
+    if(MIRRORS[S.mirror].id === 'raw'){
+      // 默认不要从 raw 起步：它会挂起（不是报错），体验最差
+      S.mirror = 1;
+    }
+    const cols = +localStorage.getItem('cols') || 3;
+    document.documentElement.style.setProperty('--gr', cols);
+    $('#btnMode').textContent = M().label;
+
+    await DB.open();
+    await loadData();
+
+    // 上次从 GitHub 增量下来的 Café
+    try{
+      const extra = JSON.parse(localStorage.getItem('cafeExtra')||'[]');
+      if(extra.length){ const known=new Set(S.cafe.map(x=>x.f));
+        for(const e of extra) if(!known.has(e.f)) S.cafe.push(e); }
+    }catch(e){}
+
+    await probeBridge();
+    renderSdChips(); renderCfChips(); bind();
+    await renderSd();
+    requestAnimationFrame(pmdLoop);
+
+    // 启动时静默检查一次更新（失败无视）
+    setTimeout(()=>{ if(navigator.onLine) checkUpdate().catch(()=>{}); }, 4000);
+  }catch(e){
+    document.body.innerHTML = '<div style="padding:40px;color:#ff6b6b;font:14px sans-serif">'+
+      '启动失败：'+e.message+'</div>';
+  }
+})();
+</script>
+</body>
+</html>
