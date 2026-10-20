@@ -312,7 +312,11 @@ function imgFallback(img, kind, rel){
 }
 
 const SD_BASE = 'https://play.pokemonshowdown.com/sprites/';
-const CAFE_BASE = 'PokemonCafeRemix/';
+// Café 图片不在安装包里了，统一从云端取；如果在部署站上打开就走同源相对路径（更快、可复用浏览器缓存）
+const CAFE_REMOTE = 'https://sgorgeous.github.io/pokemon-sprite/PokemonCafeRemix/';
+const CAFE_BASE = (location.hostname === 'sgorgeous.github.io')
+  ? 'PokemonCafeRemix/'
+  : CAFE_REMOTE;
 
 const S = {
   mirror:0,
@@ -450,6 +454,10 @@ function cardEl(opts){
   img.onload = () => img.classList.add('ok');
   img.onerror = () => { const b=img.parentElement; if(b) b.innerHTML = '<span style="color:#4a5563;font-size:10px">无图</span>'; };
   img.src = opts.url;
+  if(opts.cacheFirst){
+    // 有 IndexedDB 缓存就直接换成本地 blob，离线和二次打开都快
+    srcFor(opts.url).then(u => { if(u && u !== opts.url) img.src = u; }).catch(()=>{});
+  }
   d.querySelector('.box').appendChild(img);
   return d;
 }
@@ -590,7 +598,7 @@ function renderCf(){
   if(S.query) list = list.filter(r=>(r.s+' '+r.o+' '+r.f).toLowerCase().includes(S.query));
   const frag = document.createDocumentFragment();
   for(const r of list.slice(0, S.shown)){
-    frag.appendChild(cardEl({key:'cf|'+r.f, url:cafeURL(r.f), title:r.s||'?', sub:r.o}));
+    frag.appendChild(cardEl({key:'cf|'+r.f, url:cafeURL(r.f), title:r.s||'?', sub:r.o, cacheFirst:true}));
   }
   grid.appendChild(frag);
   const old=$('#moreBtn'); if(old) old.remove();
@@ -957,9 +965,12 @@ async function renderSet(){
       <div class="val" id="pickSrc">${M().label}</div></div>
     <div class="row"><div><div>检查更新</div><div class="sub">从 GitHub 拉最新素材</div></div>
       <div class="val" id="doUpdate">检查</div></div>
-    <div class="row"><div><div>内置 Café</div><div class="sub">${S.build ? S.build.cafeCount : S.cafe.length} 张 · ${S.build?S.build.cafeVersion:'—'}</div></div>
+    <div class="row"><div><div>Café 素材</div><div class="sub">${S.build ? S.build.cafeCount : S.cafe.length} 张 · 云端 · ${S.build?S.build.cafeVersion:'—'}</div></div>
       <div class="val">—</div></div>
     <div class="row"><div><div>网格列数</div></div><div class="val" id="pickCols">${localStorage.getItem('cols')||3} 列</div></div>
+    ${(()=>{ try{ const a=JSON.parse(localStorage.getItem('apkNew')||'null');
+      return a && a.u ? `<div class="row"><div><div>新版本 ${a.v}</div><div class="sub">安装包 ${(S.build&&S.build.appVersion)||''} → ${a.v}</div></div><div class="val" id="apkGet">下载</div></div>` : '';
+    }catch(e){ return ''; } })()}
     <div class="row"><div><div>存储权限</div><div class="sub" id="permState">检测中…</div></div>
       <div class="val" id="permAsk">申请</div></div>
     <div class="row"><div><div>存相册</div><div class="sub" id="brState">${nativeOK ? '原生通道已就绪（MediaStore，Android 10+ 免权限）' : '浏览器模式：走下载'}</div></div>
@@ -987,6 +998,12 @@ async function renderSet(){
     await fetch(BRIDGE + '__reqperm').catch(()=>{});
     toast('已发起权限申请，请看系统弹窗', 2500);
     setTimeout(()=>renderSet(), 1500);
+  };
+  const apkGet = $('#apkGet');
+  if(apkGet) apkGet.onclick = ()=>{
+    try{ const a = JSON.parse(localStorage.getItem('apkNew')||'null');
+      if(a && a.u){ toast('正在打开下载页…', 1500); location.href = a.u; }
+    }catch(e){ toast('地址无效'); }
   };
   $('#brTest').onclick = async ()=>{
     const first = S.cafe[0];
@@ -1045,9 +1062,14 @@ async function checkUpdate(){
       progHide(); toast('素材索引已刷新'); renderCf(); return;
     }
     progHide();
-    toast(up.apkVersion && up.apkVersion !== (cur.appVersion||'1.0')
-      ? '有新版本 APK：' + up.apkUrl
-      : '已是最新');
+    const hasNew = up.apkVersion && up.apkVersion !== (cur.appVersion || '1.0');
+    if(hasNew && up.apkUrl){
+      localStorage.setItem('apkNew', JSON.stringify({v:up.apkVersion, u:up.apkUrl}));
+      toast('发现新版本 ' + up.apkVersion + '，去设置里下载', 3200);
+    } else {
+      localStorage.removeItem('apkNew');
+      toast('已是最新');
+    }
   }catch(e){
     progHide();
     toast('检查失败：' + e.message);
