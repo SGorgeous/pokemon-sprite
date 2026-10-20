@@ -92,9 +92,9 @@ header{flex:none;padding:calc(var(--safe-t) + 8px) 12px 8px;background:var(--pan
 /* 底部导航 */
 nav{flex:none;height:calc(var(--nav) + var(--safe-b));padding-bottom:var(--safe-b);
   display:flex;background:var(--panel);border-top:1px solid var(--line);position:relative;z-index:20}
-nav button{flex:1;background:none;border:0;color:var(--dim);font-size:11px;font-family:inherit;
+nav button{flex:1;background:none;border:0;color:var(--dim);font-size:10.5px;font-family:inherit;padding:0 1px;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer}
-nav button .ic{font-size:19px;line-height:1}
+nav button .ic{font-size:17px;line-height:1}
 nav button.on{color:var(--acc2)}
 
 /* 多选操作条 */
@@ -201,6 +201,11 @@ nav button.on{color:var(--acc2)}
       <div class="grid" id="cfGrid"></div>
     </section>
 
+    <section class="view" id="v-off">
+      <div class="chips" id="offChips"></div>
+      <div class="grid" id="offGrid"></div>
+    </section>
+
     <section class="view" id="v-fav">
       <div class="sect" id="favCount">收藏</div>
       <div class="grid" id="favGrid"></div>
@@ -227,6 +232,7 @@ nav button.on{color:var(--acc2)}
     <button data-view="showdown" class="on"><span class="ic">◈</span>图鉴</button>
     <button data-view="pmd"><span class="ic">✧</span>迷宫</button>
     <button data-view="cafe"><span class="ic">☕</span>咖啡</button>
+    <button data-view="off"><span class="ic">✦</span>官方</button>
     <button data-view="fav"><span class="ic">♥</span>收藏</button>
     <button data-view="set"><span class="ic">⚙</span>设置</button>
   </nav>
@@ -321,7 +327,7 @@ const CAFE_BASE = (location.hostname === 'sgorgeous.github.io')
 const S = {
   mirror:0,
   subs:[], groups:[], nameMap:null, subIds:[], subCache:{},
-  pmd:[], official:[], zh:{},
+  pmd:[], official:[], zh:{}, offKind:'official-artwork', offShiny:false,
   cafe:[], cafeGroup:'',
   view:'showdown', sub:'ani', query:'',
   sel:new Set(), selMode:false,
@@ -747,6 +753,45 @@ function pmdLoop(t){
   if(ch) drawPmd();
 }
 
+/* ---------------- 视图：官方立绘（PokeAPI/sprites） ---------------- */
+function renderOffChips(){
+  const box = $('#offChips'); box.innerHTML = '';
+  const mk = (label, kind, shiny)=>{
+    const b = document.createElement('div');
+    b.className = 'chip' + (S.offKind===kind && S.offShiny===shiny ? ' on' : '');
+    b.textContent = label;
+    b.onclick = ()=>{ S.offKind = kind; S.offShiny = shiny; S.shown = 120; renderOff(); renderOffChips(); };
+    box.appendChild(b);
+  };
+  mk('官方设定画', 'official-artwork', false);
+  mk('设定画 · 异色', 'official-artwork', true);
+  mk('HOME 渲染', 'home', false);
+  mk('HOME · 异色', 'home', true);
+}
+
+function renderOff(){
+  const grid = $('#offGrid'); grid.innerHTML = '';
+  const q = S.query;
+  const list = S.official.filter(o => !q || o.name.includes(q) || String(o.id) === q);
+  const frag = document.createDocumentFragment();
+  for(const o of list.slice(0, S.shown)){
+    const url = offURL(S.offKind, S.offShiny, o.id);
+    frag.appendChild(cardEl({
+      key: 'off|' + url + '|' + o.name + '.png',
+      url, title: o.name, sub: '#' + o.id, cacheFirst: true
+    }));
+  }
+  grid.appendChild(frag);
+  const old = $('#moreBtn'); if(old) old.remove();
+  if(list.length > S.shown){
+    const b = document.createElement('button'); b.id = 'moreBtn';
+    b.textContent = `显示更多（${list.length - S.shown}）`;
+    b.onclick = ()=>{ S.shown += 120; renderOff(); };
+    grid.after(b);
+  }
+  S.selMode && syncSel();
+}
+
 /* ---------------- 视图：收藏 ---------------- */
 async function renderFav(){
   const rows = await DB.all('fav');
@@ -891,6 +936,10 @@ function selItems(){
       const rows = ($('#favGrid')._rows||[]);
       const row = rows.find(x=>x.key===rk);
       if(row) out.push({url:row.url, name:row.title+' '+(row.sub||'')});
+    } else if(kind==='off'){
+      const url = rest[0];
+      const fname = rest.slice(1).join('|') || 'pokepic.png';
+      out.push({url, name:fname});
     } else if(kind==='pmd'){
       const url = rest[0];
       const fname = rest.slice(1).join('|') || 'pmd.png';
@@ -1084,6 +1133,7 @@ function showView(v){
   exitSel();
   if(v==='showdown') renderSd();
   if(v==='cafe') renderCf();
+  if(v==='off'){ renderOffChips(); renderOff(); }
   if(v==='pmd'){ renderPmdChips();
     if(!P.cur) selectPmd(S.pmd.find(m=>m.name.replace(/_$/,'')==='Pikachu') || S.pmd[0]); }
   if(v==='fav') renderFav();
@@ -1103,6 +1153,7 @@ function bind(){
       if(S.view==='showdown') renderSd();
       else if(S.view==='cafe') renderCf();
       else if(S.view==='pmd') renderPmdChips();
+      else if(S.view==='off') renderOff();
     }, 220);
   });
 
@@ -1128,6 +1179,11 @@ function bind(){
     const url = key.split('|')[1];
     const nm = key.split('|').slice(2).join('|');
     openZoom(url, nm.replace(/\.png$/,''), 'PMD 表情');
+  });
+  bindGrid($('#offGrid'), null, (key)=>{
+    const url = key.split('|')[1];
+    const nm = key.split('|').slice(2).join('|').replace(/\.png$/, '');
+    openZoom(url, nm, '官方立绘');
   });
   bindGrid($('#favGrid'), null, async (key)=>{
     const rk = key.slice(4);
@@ -1272,7 +1328,7 @@ async function makeCacheRow(url){
     }catch(e){}
 
     await probeBridge();
-    renderSdChips(); renderCfChips(); bind();
+    renderSdChips(); renderCfChips(); renderOffChips(); bind();
     await renderSd();
     requestAnimationFrame(pmdLoop);
 
