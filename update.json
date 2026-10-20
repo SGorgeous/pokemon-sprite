@@ -1,8 +1,8 @@
 {
-  "note": "PokePic 素材更新清单：App 启动 4 秒后静默检查一次，设置里也能手动检查",
   "cafeCount": 1875,
-  "apkVersion": "1.0.7",
-  "appVersion": "1.0.7",
   "cafeVersion": "1875-388080539",
+  "appVersion": "1.0.8",
+  "note": "PokePic 素材更新清单：App 启动 4 秒后静默检查一次，设置里也能手动检查",
+  "apkVersion": "1.0.8",
   "updatedAt": "2026-10-20"
 }

@@ -654,6 +654,7 @@ function renderPmdPortraits(){
 
 async function loadPmdForm(){
   const f = P.cur.forms[+$('#pmdForm').value];
+  renderPmdPortraits();          // 先画表情条：它不依赖 AnimData.xml
   let xml;
   try{
     const r = await fetch(pmdXmlURL(P.cur.dex, f.p));
