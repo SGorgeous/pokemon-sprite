@@ -261,42 +261,37 @@ nav button.on{color:var(--acc2)}
 const $ = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 
-/* 镜像列表：按顺序尝试，成功哪个就记住哪个（存 localStorage）。
-   raw.githubusercontent 在部分网络下会「挂起」而不是报错，所以每个请求必须带超时。 */
+/* 镜像：raw.githubusercontent.com 在部分网络下会「挂起」，jsDelivr 又只是 301 回 raw，
+   所以用「对原始 URL 做前缀包装」的代理。按顺序尝试，成功哪个记住哪个（localStorage）。
+   每个请求必须带超时 —— 挂起不会报错，只会一直等。 */
+const RAW_PK  = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/';
+const RAW_PMD = 'https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/';
+
 const MIRRORS = [
-  { id:'raw',    label:'raw',
-    pmd:'https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/',
-    portrait:'https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/portrait/',
-    pk:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/' },
-  { id:'fastly', label:'fastly',
-    pmd:'https://fastly.jsdelivr.net/gh/PMDCollab/SpriteCollab@master/',
-    portrait:'https://fastly.jsdelivr.net/gh/PMDCollab/SpriteCollab@master/portrait/',
-    pk:'https://fastly.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/other/' },
-  { id:'jsd',    label:'jsd',
-    pmd:'https://cdn.jsdelivr.net/gh/PMDCollab/SpriteCollab@master/',
-    portrait:'https://cdn.jsdelivr.net/gh/PMDCollab/SpriteCollab@master/portrait/',
-    pk:'https://cdn.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/other/' },
+  { id:'ghproxy',  label:'ghproxy',  u: raw => 'https://ghproxy.net/' + raw },
+  { id:'ghproxy2', label:'gh-proxy', u: raw => 'https://gh-proxy.com/' + raw },
+  { id:'raw',      label:'raw',      u: raw => raw },
 ];
 const M = () => MIRRORS[S.mirror] || MIRRORS[0];
+const mirrorOrder = () => [S.mirror].concat(MIRRORS.map((_, i) => i).filter(i => i !== S.mirror));
 
-/** 带超时的 fetch：raw 这种会挂起的源，不设超时就会一直等。 */
+/** 带超时的 fetch：挂起的源不设超时就会一直等。 */
 function fetchT(url, ms){
   const ac = new AbortController();
   const timer = setTimeout(() => { try { ac.abort(); } catch(e){} }, ms || 7000);
   return fetch(url, {signal: ac.signal}).finally(() => clearTimeout(timer));
 }
 
-/** 依次尝试所有镜像，返回第一个成功的 {res, idx}。 */
-async function fetchAny(kind, rel, ms){
+/** 拿一个「原始 raw URL」，按镜像顺序挨个试，返回第一个成功的响应。 */
+async function fetchRaw(rawUrl, ms){
   let lastErr = '未知错误';
-  const order = [S.mirror].concat(MIRRORS.map((_,i)=>i).filter(i=>i!==S.mirror));
-  for (const i of order){
-    const url = MIRRORS[i][kind] + rel;
+  for (const i of mirrorOrder()){
+    const url = MIRRORS[i].u(rawUrl);
     try{
       const r = await fetchT(url, ms);
-      if(!r.ok) { lastErr = 'HTTP ' + r.status; continue; }
+      if(!r.ok){ lastErr = 'HTTP ' + r.status; continue; }
       if(i !== S.mirror){ S.mirror = i; localStorage.setItem('mirror', MIRRORS[i].id); }
-      return {res:r, idx:i, url};
+      return {res:r, url};
     }catch(e){
       lastErr = (e && e.name === 'AbortError') ? '超时' : (e && e.message) || String(e);
     }
@@ -304,17 +299,20 @@ async function fetchAny(kind, rel, ms){
   throw new Error(lastErr);
 }
 
-/** 给 <img> 挂镜像兜底：当前源失败就换下一个。 */
-function imgFallback(img, kind, rel){
+/** 给 <img> 挂镜像兜底：当前源失败就换下一个，全失败才显示「无图」。 */
+function imgFrom(img, rawUrl){
+  const order = mirrorOrder();
   let tried = 0;
-  const order = [S.mirror].concat(MIRRORS.map((_,i)=>i).filter(i=>i!==S.mirror));
   img.onerror = () => {
     tried++;
-    if(tried >= order.length){ img.onerror = null;
+    if(tried >= order.length){
+      img.onerror = null;
       const p = img.parentElement; if(p) p.innerHTML = '<span style="color:#4a5563;font-size:10px">无图</span>';
-      return; }
-    img.src = MIRRORS[order[tried]][kind] + rel;
+      return;
+    }
+    img.src = MIRRORS[order[tried]].u(rawUrl);
   };
+  img.src = MIRRORS[order[0]].u(rawUrl);
 }
 
 const SD_BASE = 'https://play.pokemonshowdown.com/sprites/';
@@ -426,15 +424,18 @@ function sdURL(sub, name){
 }
 const cafeURL = f => CAFE_BASE + enc(f);
 const pmdRel = (dex, path, tail) => 'sprite/' + dex + '/' + (path ? path + '/' : '') + tail;
-const pmdURL = (dex, path, action, kind) =>
-  M().pmd + pmdRel(dex, path, encodeURIComponent(action + '-' + (!kind||kind==='Anim' ? 'Anim' : 'Shadow') + '.png'));
-const pmdXmlURL = (dex, path) => M().pmd + pmdRel(dex, path, 'AnimData.xml');
+const pmdRawURL = (dex, path, action, kind) => RAW_PMD + pmdRel(dex, path,
+  encodeURIComponent(action + '-' + (!kind || kind === 'Anim' ? 'Anim' : 'Shadow') + '.png'));
+const pmdXmlRaw = (dex, path) => RAW_PMD + pmdRel(dex, path, 'AnimData.xml');
+const pmdURL = (dex, path, action, kind) => M().u(pmdRawURL(dex, path, action, kind));
 const PMD_EMOTIONS = ['Normal','Happy','Pain','Inspired','Surprised','Sad','Determined',
                       'Teary-Eyed','Joyous','Angry','Worried','Stunned','Sigh','Shouting',
                       'Dizzy','Crying','Special0','Special1'];
-const pmdPortraitRel = (dex, path, emo) => dex + '/' + (path ? path + '/' : '') + encodeURIComponent(emo) + '.png';
-const pmdPortraitURL = (dex, path, emo) => M().portrait + pmdPortraitRel(dex, path, emo);
-const offURL = (kind, shiny, id) => M().pk + kind + '/' + (shiny?'shiny/':'') + id + '.png';
+const pmdPortraitRaw = (dex, path, emo) => RAW_PMD + 'portrait/' + dex + '/'
+  + (path ? path + '/' : '') + encodeURIComponent(emo) + '.png';
+const pmdPortraitURL = (dex, path, emo) => M().u(pmdPortraitRaw(dex, path, emo));
+const offRawURL = (kind, shiny, id) => RAW_PK + kind + '/' + (shiny ? 'shiny/' : '') + id + '.png';
+const offURL = (kind, shiny, id) => M().u(offRawURL(kind, shiny, id));
 
 /* 缓存优先：有 blob 就用 blob，否则用原始地址 */
 async function srcFor(url){
@@ -658,8 +659,7 @@ function renderPmdPortraits(){
     cell.innerHTML = `<img loading="lazy" src="${url}"><span>${emo}</span>`;
     const im = cell.querySelector('img');
     im.onload = () => im.classList.add('ok');    // .card img 默认 opacity:0
-    imgFallback(im, 'portrait', pmdPortraitRel(P.cur.dex, f.p, emo));
-    im.src = url;
+    imgFrom(im, pmdPortraitRaw(P.cur.dex, f.p, emo));
     frag.appendChild(cell);
   }
   box.appendChild(frag);
@@ -671,39 +671,44 @@ async function loadPmdForm(){
   renderPmdPortraits();          // 先画表情条：它不依赖 AnimData.xml
   let xml;
   try{
-    const r = await fetch(pmdXmlURL(P.cur.dex, f.p));
-    if(!r.ok) throw new Error(r.status);
-    xml = await r.text();
+    const got = await fetchRaw(pmdXmlRaw(P.cur.dex, f.p), 8000);
+    xml = await got.res.text();
   }catch(e){
-    P.actions=[]; P.action=null; $('#pmdAct').innerHTML=''; toast('该形态没有动作数据');
-    renderPmdPortraits(); return;
+    P.actions = []; P.action = null;
+    const as = $('#pmdAct'); if(as) as.innerHTML = '';
+    const cv = $('#cv'); if(cv){ cv.width = 1; cv.height = 1; }
+    toast('动作数据加载失败：' + e.message + '（设置里可换图片源）', 4200);
+    renderPmdPortraits();
+    return;
   }
-  const doc = new DOMParser().parseFromString(xml,'application/xml');
-  const t = (n,tag)=>{ const e=n.querySelector(tag); return e?e.textContent.trim():''; };
-  P.actions = [...doc.querySelectorAll('Anims > Anim')].map(a=>({
-    name:t(a,'Name'), fw:+t(a,'FrameWidth'), fh:+t(a,'FrameHeight'),
-    durations:[...a.querySelectorAll('Durations > Duration')].map(d=>+d.textContent)
-  })).filter(a=>a.fw>0&&a.fh>0);
-  const as = $('#pmdAct'); as.innerHTML='';
-  P.actions.forEach((a,i)=>{ const o=document.createElement('option'); o.value=i;
-    o.textContent = a.name; as.appendChild(o); });
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  const t = (n, tag) => { const e = n.querySelector(tag); return e ? e.textContent.trim() : ''; };
+  P.actions = [...doc.querySelectorAll('Anims > Anim')].map(a => ({
+    name: t(a, 'Name'), fw: +t(a, 'FrameWidth'), fh: +t(a, 'FrameHeight'),
+    durations: [...a.querySelectorAll('Durations > Duration')].map(d => +d.textContent)
+  })).filter(a => a.fw > 0 && a.fh > 0);
+  const as = $('#pmdAct'); as.innerHTML = '';
+  P.actions.forEach((a, i) => {
+    const o = document.createElement('option'); o.value = i; o.textContent = a.name; as.appendChild(o);
+  });
   if(P.actions.length){
-    let i = P.actions.findIndex(a=>a.name==='Idle'); as.value = i>=0?i:0;
+    const i = P.actions.findIndex(a => a.name === 'Idle');
+    as.value = i >= 0 ? i : 0;
     await loadPmdAction();
   }
   renderPmdPortraits();
 }
+
 function pimg(src){ return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i);
   i.onerror=()=>rej(new Error(src)); i.src=src; }); }
 
 /** 动作图按镜像顺序试，成功就记住那个源。 */
 async function pmdImg(dex, path, action, kind){
+  const raw = pmdRawURL(dex, path, action, kind);
   let lastErr = null;
-  const order = [S.mirror].concat(MIRRORS.map((_,i)=>i).filter(i=>i!==S.mirror));
-  for(const i of order){
+  for(const i of mirrorOrder()){
     try{
-      const im = await pimg(MIRRORS[i].pmd + pmdRel(dex, path,
-        encodeURIComponent(action + '-' + kind + '.png')));
+      const im = await pimg(MIRRORS[i].u(raw));
       if(i !== S.mirror){ S.mirror = i; localStorage.setItem('mirror', MIRRORS[i].id); }
       return im;
     }catch(e){ lastErr = e; }
@@ -776,10 +781,13 @@ function renderOff(){
   const frag = document.createDocumentFragment();
   for(const o of list.slice(0, S.shown)){
     const url = offURL(S.offKind, S.offShiny, o.id);
-    frag.appendChild(cardEl({
+    const card = cardEl({
       key: 'off|' + url + '|' + o.name + '.png',
       url, title: o.name, sub: '#' + o.id, cacheFirst: true
-    }));
+    });
+    const im = card.querySelector('img');
+    if(im) imgFrom(im, offRawURL(S.offKind, S.offShiny, o.id));
+    frag.appendChild(card);
   }
   grid.appendChild(frag);
   const old = $('#moreBtn'); if(old) old.remove();
@@ -1010,7 +1018,7 @@ async function renderSet(){
       <div class="val" id="clearCache">清空</div></div>
     <div class="row"><div><div>收藏</div><div class="sub">${favRows.length} 条</div></div>
       <div class="val" id="clearFav">清空</div></div>
-    <div class="row"><div><div>图片源</div><div class="sub">raw / fastly / jsd · 失败自动换</div></div>
+    <div class="row"><div><div>图片源</div><div class="sub">ghproxy / gh-proxy / raw · 失败自动换</div></div>
       <div class="val" id="pickSrc">${M().label}</div></div>
     <div class="row"><div><div>检查更新</div><div class="sub">从 GitHub 拉最新素材</div></div>
       <div class="val" id="doUpdate">检查</div></div>
@@ -1307,12 +1315,9 @@ async function makeCacheRow(url){
 /* ---------------- 启动 ---------------- */
 (async function boot(){
   try{
-    const savedMirror = localStorage.getItem('mirror') || 'fastly';
-    S.mirror = Math.max(0, MIRRORS.findIndex(m => m.id === savedMirror));
-    if(MIRRORS[S.mirror].id === 'raw'){
-      // 默认不要从 raw 起步：它会挂起（不是报错），体验最差
-      S.mirror = 1;
-    }
+    const savedMirror = localStorage.getItem('mirror') || 'ghproxy';
+    const found = MIRRORS.findIndex(m => m.id === savedMirror);
+    S.mirror = found >= 0 ? found : 0;
     const cols = +localStorage.getItem('cols') || 3;
     document.documentElement.style.setProperty('--gr', cols);
     $('#btnMode').textContent = M().label;

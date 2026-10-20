@@ -104,7 +104,7 @@ button.mini.on{background:#24405f;border-color:var(--accent)}
       <input id="q" placeholder="搜索名字（跨全部系列）…  例 pikachu / charizard-mega" autocomplete="off">
       <span id="stat"></span>
       <button class="mini" id="btnCross" title="显示该名字在所有系列里的版本">全系列</button>
-      <button class="mini" id="btnCdn" title="切换图片源">源: jsDelivr</button>
+      <button class="mini" id="btnCdn" title="切换图片源">源: ghproxy</button>
     </div>
     <div id="content"><div class="spin">载入中…</div></div>
     <div class="pmd" id="pmdWrap">
@@ -143,10 +143,24 @@ const S = {
   subs:[], groups:[], nameMap:{}, subIds:[], subCache:{},
   pmd:[], pmdCur:null, official:[], offKind:"official-artwork", offShiny:false,
   cafe:[], cafeOk:false, cafeGroup:"",
-  cdn:"jsd",
+  cdn:"ghproxy",
 };
 
 const CDN = {
+  // 前缀代理：raw.githubusercontent.com 在国内常「挂起」，jsDelivr 又只是 301 回 raw，
+  // 只有这类代理真的能取到内容。
+  ghproxy: {
+    label: "ghproxy",
+    sd: "https://play.pokemonshowdown.com/sprites/",
+    pmd: "https://ghproxy.net/https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/sprite/",
+    pk:  "https://ghproxy.net/https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/",
+  },
+  ghproxy2: {
+    label: "gh-proxy",
+    sd: "https://play.pokemonshowdown.com/sprites/",
+    pmd: "https://gh-proxy.com/https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/sprite/",
+    pk:  "https://gh-proxy.com/https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/",
+  },
   raw: {
     label: "GitHub raw",
     sd: "https://play.pokemonshowdown.com/sprites/",        // Showdown 自己就是 CDN，不参与切换
@@ -211,7 +225,8 @@ function bind(){
   },120); });
   el("btnCross").onclick=()=>{ S.cross=!S.cross; el("btnCross").classList.toggle("on",S.cross); render(); };
   el("btnCdn").onclick=()=>{
-    S.cdn = S.cdn==="jsd" ? "jsd" : "raw";
+    const keys = Object.keys(CDN);
+    S.cdn = keys[(keys.indexOf(S.cdn) + 1) % keys.length];
     el("btnCdn").textContent = "源: " + C().label;
     render();
   };
