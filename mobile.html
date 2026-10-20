@@ -9,7 +9,7 @@
 :root{
   --bg:#0f1318; --panel:#171d24; --panel2:#1f2831; --line:#2a3542;
   --fg:#e6edf5; --dim:#8b98a9; --acc:#4a9eff; --acc2:#ffb84a; --danger:#ff6b6b;
-  --nav:64px; --gr:3;
+  --nav:0px; --gr:3; --fab:76px;
   --safe-b:env(safe-area-inset-bottom,0px);
   --safe-t:env(safe-area-inset-top,0px);
 }
@@ -20,8 +20,8 @@ html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--
 #app{display:flex;flex-direction:column;height:100vh;height:100dvh}
 
 /* ---------- 顶栏 ---------- */
-header{flex:none;padding:calc(var(--safe-t) + 8px) 12px 8px;background:var(--panel);
-  border-bottom:1px solid var(--line);display:flex;gap:8px;align-items:center}
+header{flex:none;display:flex;align-items:center;gap:8px;
+  padding:calc(var(--safe-t) + 8px) 10px 8px;background:var(--panel);border-bottom:1px solid var(--line)}
 #q{flex:1;min-width:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;
   color:var(--fg);font-size:15px;padding:9px 12px;outline:none;font-family:inherit}
 #q:focus{border-color:var(--acc)}
@@ -90,14 +90,6 @@ header{flex:none;padding:calc(var(--safe-t) + 8px) 12px 8px;background:var(--pan
 #pmdCtl button.on{background:#1d3852;border-color:var(--acc);color:#cfe4ff}
 
 /* 底部导航 */
-nav{flex:none;height:calc(var(--nav) + var(--safe-b));padding-bottom:var(--safe-b);
-  display:flex;background:var(--panel);border-top:1px solid var(--line);position:relative;z-index:20}
-nav button{flex:1;background:none;border:0;color:var(--dim);font-size:10.5px;font-family:inherit;padding:0 1px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer}
-nav button .ic{font-size:17px;line-height:1}
-nav button.on{color:var(--acc2)}
-
-/* 多选操作条 */
 #selbar{position:fixed;left:0;right:0;bottom:calc(var(--nav) + var(--safe-b));background:#101820;
   border-top:1px solid var(--line);display:none;gap:6px;padding:8px 10px;z-index:30}
 #selbar.on{display:flex}
@@ -166,48 +158,56 @@ nav button.on{color:var(--acc2)}
 <body>
 <div id="app">
   <header>
-    <input id="q" placeholder="搜索宝可梦 / 服装（支持中文）…" autocomplete="off" spellcheck="false">
-    <button class="iconbtn" id="btnMode" title="切换图片源">raw</button>
+    <button class="iconbtn" id="btnSrc" title="图片源">主</button>
+    <input id="q" autocomplete="off" spellcheck="false">
+    <button class="iconbtn" id="btnSet" title="设置">⚙</button>
   </header>
 
   <div id="views">
     <section class="view on" id="v-showdown">
-      <div class="chips" id="sdChips"></div>
+      <div class="chipbar"><button class="chipExpand" id="sdExpand">▾</button>
+        <div class="chips" id="sdChips"></div></div>
       <div class="grid" id="sdGrid"></div>
     </section>
 
     <section class="view" id="v-pmd">
-      <div class="chips" id="pmdChips"></div>
-      <div id="pmdStage">
-        <div id="pmdTop">
-          <select id="pmdForm"></select>
-          <select id="pmdAct"></select>
-          <select id="pmdDir"></select>
+      <div id="pmdLayout">
+        <div id="pmdMain">
+          <div id="pmdTop">
+            <select id="pmdForm"></select>
+            <select id="pmdAct"></select>
+            <select id="pmdDir"></select>
+          </div>
+          <div id="pmdCanvasWrap"><canvas id="cv" width="120" height="120"></canvas></div>
+          <div id="pmdCtl">
+            <button id="pmdPlay" class="on">暂停</button>
+            <button id="pmdShadow">影子</button>
+            <button id="pmdEight">8向</button>
+            <button id="pmdGif">保存GIF</button>
+            <button id="pmdSave">保存</button>
+          </div>
+          <div id="pmdLabel">表情头像 · 点开可保存，长按可多选</div>
+          <div class="pstrip" id="pmdPortraits"></div>
         </div>
-        <div id="pmdCanvasWrap"><canvas id="cv" width="120" height="120"></canvas></div>
-        <div id="pmdCtl">
-          <button id="pmdPlay" class="on">暂停</button>
-          <button id="pmdShadow">影子</button>
-          <button id="pmdEight">8向</button>
-          <button id="pmdSave">保存</button>
-        </div>
-        <div id="pmdLabel">表情头像 · 点开可存相册，长按可多选</div>
-        <div class="pstrip" id="pmdPortraits"></div>
+        <div class="sidecol" id="pmdChips"></div>
       </div>
     </section>
 
     <section class="view" id="v-cafe">
-      <div class="chips" id="cfChips"></div>
+      <div class="chipbar"><button class="chipExpand" id="cfExpand">▾</button>
+        <div class="chips" id="cfChips"></div></div>
       <div class="grid" id="cfGrid"></div>
     </section>
 
     <section class="view" id="v-off">
-      <div class="chips" id="offChips"></div>
+      <div class="chipbar"><button class="chipExpand" id="offExpand">▾</button>
+        <div class="chips" id="offChips"></div></div>
       <div class="grid" id="offGrid"></div>
     </section>
 
     <section class="view" id="v-fav">
-      <div class="sect" id="favCount">收藏</div>
+      <div class="chipbar"><button class="chipExpand" id="favExpand" style="visibility:hidden">▾</button>
+        <div class="chips" id="favChips"></div></div>
       <div class="grid" id="favGrid"></div>
     </section>
 
@@ -215,27 +215,24 @@ nav button.on{color:var(--acc2)}
       <div class="rows" id="setRows"></div>
       <div class="muted" id="about"></div>
     </section>
+
+    <div id="chipFull"><div class="fh"><span id="cfTitle">全部分类</span>
+      <button class="iconbtn" id="cfClose">✕</button></div>
+      <div class="fb" id="cfBody"></div></div>
   </div>
 
   <div id="selbar">
     <button id="selAll">全选</button>
     <button id="selFav">收藏</button>
-    <button id="selCache">缓存</button>
-    <button id="selSave" class="primary">存相册</button>
+    <button id="selSave" class="primary">保存</button>
     <button id="selExit">取消</button>
   </div>
 
   <div id="prog"><div class="t"><span id="progT">准备中…</span><span id="progN"></span></div>
     <div class="bar"><i id="progBar"></i></div></div>
 
-  <nav>
-    <button data-view="showdown" class="on"><span class="ic">◈</span>图鉴</button>
-    <button data-view="pmd"><span class="ic">✧</span>迷宫</button>
-    <button data-view="cafe"><span class="ic">☕</span>咖啡</button>
-    <button data-view="off"><span class="ic">✦</span>官方</button>
-    <button data-view="fav"><span class="ic">♥</span>收藏</button>
-    <button data-view="set"><span class="ic">⚙</span>设置</button>
-  </nav>
+  <button id="fab" title="菜单"><span class="ball"></span></button>
+  <div id="radial"></div>
 </div>
 
 <div id="zoom">
@@ -244,7 +241,7 @@ nav button.on{color:var(--acc2)}
   <div id="zoomBody"><img id="zoomImg" alt=""></div>
   <div id="zoomBot">
     <button id="zoomFav">收藏</button>
-    <button id="zoomSave">存相册</button>
+    <button id="zoomSave">保存</button>
     <button id="zoomShuffle">来一张</button>
   </div>
 </div>
