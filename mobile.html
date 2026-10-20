@@ -888,8 +888,6 @@ function dispName(idOrName){
   const raw = String(idOrName || '');
   if(!raw) return '';
   const lang = localStorage.getItem('lang') || 'zh';
-  const verLine = `<div class="row"><div><div>${S.codename} · ${(S.build && S.build.appVersion) || '1.1.0'}</div>
-      <div class="sub">PokePic 当前版本（内部 ${(S.build && S.build.appVersion) || '1.1.0'}）</div></div></div>`;
   if(lang === 'en') return titleCase(raw);
 
   const key = raw.toLowerCase().replace(/\s+/g, '-');
@@ -1413,6 +1411,8 @@ async function renderSet(){
   const favRows = await DB.all('fav');
   const lang = localStorage.getItem('lang') || 'zh';
   const lefty = localStorage.getItem('lefty') === '1';
+  const verLine = `<div class="row"><div><div>${S.codename} · ${(S.build && S.build.appVersion) || '1.1.0'}</div>
+      <div class="sub">PokePic 当前版本（内部 ${(S.build && S.build.appVersion) || '1.1.0'}）</div></div></div>`;
   $('#setRows').innerHTML = `
     ${verLine}
     <div class="row" id="rowUpdate"><div><div>检查更新</div>
