@@ -1,0 +1,468 @@
+{
+ "subs": [
+  {
+   "id": "ani",
+   "label": "动态 GIF · 正面 · 普通",
+   "ext": ".gif",
+   "count": 1679
+  },
+  {
+   "id": "ani-back",
+   "label": "动态 GIF · 背面 · 普通",
+   "ext": ".gif",
+   "count": 1574
+  },
+  {
+   "id": "ani-shiny",
+   "label": "动态 GIF · 正面 · 异色",
+   "ext": ".gif",
+   "count": 1635
+  },
+  {
+   "id": "ani-back-shiny",
+   "label": "动态 GIF · 背面 · 异色",
+   "ext": ".gif",
+   "count": 1589
+  },
+  {
+   "id": "gen5ani",
+   "label": "第5世代动态 GIF · 正面",
+   "ext": ".gif",
+   "count": 1255
+  },
+  {
+   "id": "gen5ani-back",
+   "label": "第5世代动态 GIF · 背面",
+   "ext": ".gif",
+   "count": 1137
+  },
+  {
+   "id": "gen5ani-shiny",
+   "label": "第5世代动态 GIF · 正面 · 异色",
+   "ext": ".gif",
+   "count": 1252
+  },
+  {
+   "id": "gen5ani-back-shiny",
+   "label": "第5世代动态 GIF · 背面 · 异色",
+   "ext": ".gif",
+   "count": 1135
+  },
+  {
+   "id": "gen1",
+   "label": "第1世代 红绿蓝 精灵图",
+   "ext": ".png",
+   "count": 158
+  },
+  {
+   "id": "gen1-back",
+   "label": "第1世代 背面",
+   "ext": ".png",
+   "count": 153
+  },
+  {
+   "id": "gen1rb",
+   "label": "第1世代 红版",
+   "ext": ".png",
+   "count": 151
+  },
+  {
+   "id": "gen1rg",
+   "label": "第1世代 绿版",
+   "ext": ".png",
+   "count": 151
+  },
+  {
+   "id": "gen1rgb-back",
+   "label": "第1世代 红绿蓝 背面",
+   "ext": ".png",
+   "count": 151
+  },
+  {
+   "id": "gen2",
+   "label": "第2世代 金/银 精灵图",
+   "ext": ".png",
+   "count": 278
+  },
+  {
+   "id": "gen2-back",
+   "label": "第2世代 背面",
+   "ext": ".png",
+   "count": 277
+  },
+  {
+   "id": "gen2-shiny",
+   "label": "第2世代 异色",
+   "ext": ".png",
+   "count": 276
+  },
+  {
+   "id": "gen2-back-shiny",
+   "label": "第2世代 背面异色",
+   "ext": ".png",
+   "count": 276
+  },
+  {
+   "id": "gen2g",
+   "label": "第2世代 金版",
+   "ext": ".png",
+   "count": 276
+  },
+  {
+   "id": "gen2s",
+   "label": "第2世代 银版",
+   "ext": ".png",
+   "count": 276
+  },
+  {
+   "id": "gen3",
+   "label": "第3世代 红蓝宝石/绿宝石 精灵图",
+   "ext": ".png",
+   "count": 423
+  },
+  {
+   "id": "gen3-2",
+   "label": "第3世代 第二套",
+   "ext": ".png",
+   "count": 396
+  },
+  {
+   "id": "gen3-back",
+   "label": "第3世代 背面",
+   "ext": ".png",
+   "count": 422
+  },
+  {
+   "id": "gen3-shiny",
+   "label": "第3世代 异色",
+   "ext": ".png",
+   "count": 421
+  },
+  {
+   "id": "gen3-back-shiny",
+   "label": "第3世代 背面异色",
+   "ext": ".png",
+   "count": 420
+  },
+  {
+   "id": "gen3frlg",
+   "label": "第3世代 火红/叶绿",
+   "ext": ".png",
+   "count": 152
+  },
+  {
+   "id": "gen3rs",
+   "label": "第3世代 红宝石/蓝宝石",
+   "ext": ".png",
+   "count": 386
+  },
+  {
+   "id": "gen3rs-shiny",
+   "label": "第3世代 红蓝宝石 异色",
+   "ext": ".png",
+   "count": 386
+  },
+  {
+   "id": "gen4",
+   "label": "第4世代 珍珠/钻石/白金",
+   "ext": ".png",
+   "count": 683
+  },
+  {
+   "id": "gen4-back",
+   "label": "第4世代 背面",
+   "ext": ".png",
+   "count": 678
+  },
+  {
+   "id": "gen4-shiny",
+   "label": "第4世代 异色",
+   "ext": ".png",
+   "count": 679
+  },
+  {
+   "id": "gen4-back-shiny",
+   "label": "第4世代 背面异色",
+   "ext": ".png",
+   "count": 677
+  },
+  {
+   "id": "gen4dp",
+   "label": "第4世代 钻石/珍珠",
+   "ext": ".png",
+   "count": 619
+  },
+  {
+   "id": "gen4dp-2",
+   "label": "第4世代 钻石/珍珠 第二套",
+   "ext": ".png",
+   "count": 619
+  },
+  {
+   "id": "gen4dp-shiny",
+   "label": "第4世代 钻石/珍珠 异色",
+   "ext": ".png",
+   "count": 619
+  },
+  {
+   "id": "gen4dp-2-shiny",
+   "label": "第4世代 钻石/珍珠 第二套异色",
+   "ext": ".png",
+   "count": 619
+  },
+  {
+   "id": "gen5",
+   "label": "第5世代 黑/白 精灵图",
+   "ext": ".png",
+   "count": 1667
+  },
+  {
+   "id": "gen5-back",
+   "label": "第5世代 背面",
+   "ext": ".png",
+   "count": 1664
+  },
+  {
+   "id": "gen5-shiny",
+   "label": "第5世代 异色",
+   "ext": ".png",
+   "count": 1645
+  },
+  {
+   "id": "gen5-back-shiny",
+   "label": "第5世代 背面异色",
+   "ext": ".png",
+   "count": 1641
+  },
+  {
+   "id": "gen6",
+   "label": "第6世代 X/Y 精灵图",
+   "ext": ".png",
+   "count": 1091
+  },
+  {
+   "id": "gen6-back",
+   "label": "第6世代 背面",
+   "ext": ".png",
+   "count": 36
+  },
+  {
+   "id": "home",
+   "label": "Pokémon HOME 渲染",
+   "ext": ".png",
+   "count": 1514
+  },
+  {
+   "id": "home-shiny",
+   "label": "Pokémon HOME 渲染 · 异色",
+   "ext": ".png",
+   "count": 1514
+  },
+  {
+   "id": "home-centered",
+   "label": "Pokémon HOME 渲染 · 居中",
+   "ext": ".png",
+   "count": 1514
+  },
+  {
+   "id": "home-centered-shiny",
+   "label": "Pokémon HOME 渲染 · 居中异色",
+   "ext": ".png",
+   "count": 1514
+  },
+  {
+   "id": "dex",
+   "label": "图鉴小图标",
+   "ext": ".png",
+   "count": 1457
+  },
+  {
+   "id": "dex-shiny",
+   "label": "图鉴小图标 · 异色",
+   "ext": ".png",
+   "count": 1413
+  },
+  {
+   "id": "bwicons",
+   "label": "队伍栏图标（BW 风格）",
+   "ext": ".png",
+   "count": 747
+  },
+  {
+   "id": "gen5icons",
+   "label": "队伍栏图标（第5世代）",
+   "ext": ".png",
+   "count": 747
+  },
+  {
+   "id": "itemicons",
+   "label": "道具图标",
+   "ext": ".png",
+   "count": 581
+  },
+  {
+   "id": "typeicons",
+   "label": "属性图标",
+   "ext": ".png",
+   "count": 19
+  },
+  {
+   "id": "types",
+   "label": "属性图标（大字版）",
+   "ext": ".png",
+   "count": 39
+  },
+  {
+   "id": "categories",
+   "label": "招式分类图标（物理/特殊/变化）",
+   "ext": ".png",
+   "count": 4
+  },
+  {
+   "id": "misc",
+   "label": "杂项（奖章等）",
+   "ext": ".png",
+   "count": 18
+  },
+  {
+   "id": "trainers",
+   "label": "训练家立绘",
+   "ext": ".png",
+   "count": 1455
+  },
+  {
+   "id": "gen6bgs",
+   "label": "第6世代 战斗背景",
+   "ext": ".jpg",
+   "count": 24
+  },
+  {
+   "id": "afd",
+   "label": "愚人节换装 · 正面",
+   "ext": ".png",
+   "count": 1972
+  },
+  {
+   "id": "afd-back",
+   "label": "愚人节换装 · 背面",
+   "ext": ".png",
+   "count": 1968
+  },
+  {
+   "id": "afd-shiny",
+   "label": "愚人节换装 · 异色",
+   "ext": ".png",
+   "count": 1962
+  },
+  {
+   "id": "afd-back-shiny",
+   "label": "愚人节换装 · 背面异色",
+   "ext": ".png",
+   "count": 1961
+  },
+  {
+   "id": "_repo-extras",
+   "label": "Showdown 仓库自带图标拼图 / 测试页",
+   "ext": ".png",
+   "count": 14
+  }
+ ],
+ "groups": [
+  {
+   "title": "动态 GIF · 正面/背面（Showdown 招牌）",
+   "subs": [
+    "ani",
+    "ani-back",
+    "ani-shiny",
+    "ani-back-shiny"
+   ]
+  },
+  {
+   "title": "动态 GIF · 第 5 世代",
+   "subs": [
+    "gen5ani",
+    "gen5ani-back",
+    "gen5ani-shiny",
+    "gen5ani-back-shiny"
+   ]
+  },
+  {
+   "title": "各世代静态精灵图",
+   "subs": [
+    "gen1",
+    "gen1-back",
+    "gen1rb",
+    "gen1rg",
+    "gen1rgb-back",
+    "gen2",
+    "gen2-back",
+    "gen2-shiny",
+    "gen2-back-shiny",
+    "gen2g",
+    "gen2s",
+    "gen3",
+    "gen3-2",
+    "gen3-back",
+    "gen3-shiny",
+    "gen3-back-shiny",
+    "gen3frlg",
+    "gen3rs",
+    "gen3rs-shiny",
+    "gen4",
+    "gen4-back",
+    "gen4-shiny",
+    "gen4-back-shiny",
+    "gen4dp",
+    "gen4dp-2",
+    "gen4dp-shiny",
+    "gen4dp-2-shiny",
+    "gen5",
+    "gen5-back",
+    "gen5-shiny",
+    "gen5-back-shiny",
+    "gen6",
+    "gen6-back"
+   ]
+  },
+  {
+   "title": "Pokémon HOME 渲染",
+   "subs": [
+    "home",
+    "home-shiny",
+    "home-centered",
+    "home-centered-shiny"
+   ]
+  },
+  {
+   "title": "小图标 / 队伍栏",
+   "subs": [
+    "dex",
+    "dex-shiny",
+    "bwicons",
+    "gen5icons"
+   ]
+  },
+  {
+   "title": "图标：道具 / 属性 / 招式分类",
+   "subs": [
+    "itemicons",
+    "typeicons",
+    "types",
+    "categories",
+    "misc"
+   ]
+  },
+  {
+   "title": "其他",
+   "subs": [
+    "trainers",
+    "gen6bgs",
+    "afd",
+    "afd-back",
+    "afd-shiny",
+    "afd-back-shiny",
+    "_repo-extras"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PokémonSprite 在线阅读器</title>
+<style>
+:root{--bg:#12161c;--panel:#1a2029;--panel2:#222a35;--line:#2e3846;--text:#dfe6ef;
+      --dim:#8b98a9;--accent:#4a9eff;--accent2:#ffb84a}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font:13px/1.5 "Microsoft YaHei UI","Segoe UI",sans-serif;overflow:hidden}
+#app{display:grid;grid-template-columns:236px 1fr;height:100vh}
+#side{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+#side h1{font-size:13px;margin:0;padding:12px 14px 6px;color:var(--accent2);font-weight:600}
+#side .hint{padding:0 14px 8px;color:var(--dim);font-size:11px;line-height:1.5}
+#tree{overflow-y:auto;flex:1;padding:0 6px 14px}
+.grp{margin:8px 6px 2px;color:var(--dim);font-size:11px}
+.sub{padding:4px 9px;border-radius:5px;cursor:pointer;display:flex;justify-content:space-between;
+  gap:8px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub:hover{background:var(--panel2)}
+.sub.on{background:#24405f;color:#fff}
+.sub .n{color:var(--dim);font-size:11px;flex:none}
+.sub.on .n{color:#9fc4ea}
+#main{display:flex;flex-direction:column;min-width:0;min-height:0}
+#tabs{display:flex;gap:4px;padding:8px 12px 0;background:var(--panel);border-bottom:1px solid var(--line)}
+#tabs button{background:transparent;border:1px solid transparent;border-bottom:none;color:var(--dim);
+  padding:7px 14px;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-family:inherit}
+#tabs button:hover{color:var(--text);background:var(--panel2)}
+#tabs button.on{background:var(--panel2);border-color:var(--line);color:var(--accent2)}
+#bar{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);
+  background:var(--panel);flex-wrap:wrap}
+#q{flex:1;min-width:200px;padding:7px 11px;border-radius:7px;border:1px solid var(--line);
+  background:var(--panel2);color:var(--text);font-size:13px;outline:none;font-family:inherit}
+#q:focus{border-color:var(--accent)}
+select,button.mini{background:var(--panel2);color:var(--text);border:1px solid var(--line);
+  border-radius:7px;padding:6px 9px;font-size:12.5px;cursor:pointer;font-family:inherit}
+button.mini:hover{border-color:var(--accent)}
+button.mini.on{background:#24405f;border-color:var(--accent)}
+#stat{color:var(--dim);font-size:11.5px;white-space:nowrap}
+#content{flex:1;overflow:auto;min-height:0;padding:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:9px;overflow:hidden;
+  cursor:zoom-in;display:flex;flex-direction:column}
+.card:hover{border-color:#5a4a38}
+.card .box{height:86px;display:flex;align-items:center;justify-content:center;background:#0e1117}
+.card img{max-width:100%;max-height:100%;image-rendering:pixelated;opacity:0;transition:opacity .18s}
+.card img.ok{opacity:1}
+.card .cap{font-size:10.5px;color:var(--dim);padding:3px 5px;white-space:nowrap;overflow:hidden;
+  text-overflow:ellipsis;text-align:center}
+.card .cap b{color:var(--text);font-weight:500}
+#more{display:block;margin:16px auto;padding:8px 22px}
+.pmd{display:none;flex-direction:column;flex:1;min-height:0}
+.pmd.on{display:flex}
+#pmdBar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px;
+  border-bottom:1px solid var(--line);background:var(--panel)}
+#pmdBar label{color:var(--dim);font-size:11.5px}
+#stageP{flex:1;display:flex;align-items:center;justify-content:center;overflow:auto;min-height:0;
+  background-color:#0d1117;background-image:
+  linear-gradient(45deg,#161b22 25%,transparent 25%,transparent 75%,#161b22 75%),
+  linear-gradient(45deg,#161b22 25%,transparent 25%,transparent 75%,#161b22 75%);
+  background-size:20px 20px;background-position:0 0,10px 10px}
+#cvP{image-rendering:pixelated;display:block}
+#stripP{padding:8px 14px;border-top:1px solid var(--line);background:var(--panel);display:none;
+  align-items:center;gap:10px;overflow-x:auto}
+#stripP.on{display:flex}
+#cv8{image-rendering:pixelated}
+#pmdStat{padding:6px 14px;border-top:1px solid var(--line);background:var(--panel);
+  color:var(--dim);font-size:11.5px;display:flex;gap:16px;flex-wrap:wrap}
+#pmdStat b{color:var(--text)}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:99;display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:14px;padding:22px}
+#lb.on{display:flex}
+#lb .stage img{image-rendering:pixelated;min-width:96px;max-height:50vh;background:
+  repeating-conic-gradient(#1b2029 0 25%,#141920 0 50%) 0 0/18px 18px;border-radius:8px;padding:10px}
+#lb .cap{color:var(--dim);font-size:12px}
+#lb .cap b{color:var(--text)}
+#lb .strip{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-content:flex-start;
+  width:92vw;max-height:42vh;overflow:auto}
+#lb .strip figure{margin:0;text-align:center}
+#lb .strip img{max-height:72px;image-rendering:pixelated}
+#lb .strip figcaption{font-size:10px;color:var(--dim)}
+.err{color:#ff7b72}
+.spin{color:var(--dim);padding:20px}
+.note{color:var(--dim);font-size:12px;line-height:1.8;max-width:640px}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="side">
+    <h1>PokémonSprite 在线</h1>
+    <div class="hint" id="sideHint">载入中…</div>
+    <div id="tree"></div>
+  </aside>
+  <main id="main">
+    <div id="tabs">
+      <button data-m="showdown" class="on">Showdown</button>
+      <button data-m="pmd">PMD 动画</button>
+      <button data-m="official">官方立绘</button>
+      <button data-m="cafe" id="tabCafe" style="display:none">Café ReMix</button>
+      <button data-m="about">说明</button>
+    </div>
+    <div id="bar">
+      <input id="q" placeholder="搜索名字（跨全部系列）…  例 pikachu / charizard-mega" autocomplete="off">
+      <span id="stat"></span>
+      <button class="mini" id="btnCross" title="显示该名字在所有系列里的版本">全系列</button>
+      <button class="mini" id="btnCdn" title="切换图片源">源: GitHub raw</button>
+    </div>
+    <div id="content"><div class="spin">载入中…</div></div>
+    <div class="pmd" id="pmdWrap">
+      <div id="pmdBar">
+        <label>形态</label><select id="form"><option value="">基础形态</option></select>
+        <label>动作</label><select id="action"></select>
+        <label>朝向</label><select id="dir"></select>
+        <button class="mini on" id="play">暂停</button>
+        <label>速度</label><input id="speed" type="range" min="0.25" max="3" step="0.25" value="1">
+        <span id="speedVal" style="color:var(--dim)">1x</span>
+        <label>缩放</label><input id="zoom" type="range" min="1" max="8" step="1" value="4">
+        <span id="zoomVal" style="color:var(--dim)">4x</span>
+        <button class="mini" id="shadow">影子</button>
+        <button class="mini" id="eight">8向</button>
+      </div>
+      <div id="stageP"><canvas id="cvP" width="256" height="224"></canvas></div>
+      <div id="stripP"><span style="color:var(--dim)">8 向：</span><canvas id="cv8"></canvas></div>
+      <div id="pmdStat">
+        <span>宝可梦 <b id="pName">—</b></span>
+        <span>帧 <b id="pFrame">—</b></span>
+        <span>尺寸 <b id="pSize">—</b></span>
+        <span>动作 <b id="pActs">—</b></span>
+        <span>空格 播放　←→ 朝向　↑↓ 动作</span>
+      </div>
+    </div>
+  </main>
+</div>
+<div id="lb"><div class="stage"><img id="lbImg" alt=""></div>
+  <div class="cap" id="lbCap"></div><div class="strip" id="lbStrip"></div></div>
+
+<script>
+"use strict";
+const el = id => document.getElementById(id);
+const S = {
+  mode:"showdown", sub:null, query:"", cross:false,
+  subs:[], groups:[], nameMap:{}, subIds:[], subCache:{},
+  pmd:[], pmdCur:null, official:[], offKind:"official-artwork", offShiny:false,
+  cafe:[], cafeOk:false, cafeGroup:"",
+  cdn:"raw",
+};
+
+const CDN = {
+  raw: {
+    label: "GitHub raw",
+    sd: "https://play.pokemonshowdown.com/sprites/",        // Showdown 自己就是 CDN，不参与切换
+    pmd: "https://raw.githubusercontent.com/PMDCollab/SpriteCollab/master/sprite/",
+    pk:  "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/",
+  },
+  jsd: {
+    label: "jsDelivr(fastly)",
+    sd: "https://play.pokemonshowdown.com/sprites/",
+    pmd: "https://fastly.jsdelivr.net/gh/PMDCollab/SpriteCollab@master/sprite/",
+    pk:  "https://fastly.jsdelivr.net/gh/PokeAPI/sprites@master/sprites/pokemon/other/",
+  },
+};
+const C = () => CDN[S.cdn];
+const sprites = {
+  showdown: (sub, name, ext) => C().sd + sub + "/" + encodeURIComponent(name) + ext,
+  pmd: (dex, path, action, kind) =>
+    C().pmd + dex + "/" + (path ? path + "/" : "") + encodeURIComponent(action + "-" + kind + ".png"),
+  pmdXml: (dex, path) => C().pmd + dex + "/" + (path ? path + "/" : "") + "AnimData.xml",
+  offArt: (id) => C().pk + S.offKind + "/" + (S.offShiny ? "shiny/" : "") + id + ".png",
+};
+
+/* ---------------- boot ---------------- */
+init();
+async function init(){
+  try{
+    const D = window.__DATA__;
+    const [subs, names, pmd, off] = D
+      ? [D.subs, D.names, D.pmd, D.official]
+      : await Promise.all([
+          fetch("data/subs.json").then(r=>r.json()),
+          fetch("data/names.json").then(r=>r.json()),
+          fetch("data/pmd.json").then(r=>r.json()),
+          fetch("data/official.json").then(r=>r.json()),
+        ]);
+    S.subs = subs.subs; S.groups = subs.groups;
+    S.nameMap = names.map; S.subIds = names.subs;
+    S.pmd = pmd; S.official = off;
+    S.sub = S.subs.find(s=>s.id==="ani") ? "ani" : S.subs[0].id;
+    bind(); buildTree();
+    await probeCafe();
+    el("sideHint").textContent =
+      `${S.subs.length} 组 · ${Object.keys(S.nameMap).length} 个名字 · ` +
+      `PMD ${S.pmd.length} 只 · 立绘 ${S.official.length}`;
+    render();
+  }catch(e){
+    el("content").innerHTML = '<div class="spin err">载入失败：'+e.message+
+      '<br>请用 start-online.ps1 起个本地服务（file:// 下 fetch 会被拦）</div>';
+  }
+}
+
+function bind(){
+  el("tabs").addEventListener("click", e=>{
+    const b=e.target.closest("button[data-m]"); if(!b) return;
+    document.querySelectorAll("#tabs button").forEach(x=>x.classList.toggle("on",x===b));
+    setMode(b.dataset.m);
+  });
+  let t=0;
+  el("q").addEventListener("input", e=>{ clearTimeout(t); t=setTimeout(()=>{
+    S.query = e.target.value.trim().toLowerCase();
+    if(S.mode==="pmd") filterPmd(S.query); else render();
+  },120); });
+  el("btnCross").onclick=()=>{ S.cross=!S.cross; el("btnCross").classList.toggle("on",S.cross); render(); };
+  el("btnCdn").onclick=()=>{
+    S.cdn = S.cdn==="raw" ? "jsd" : "raw";
+    el("btnCdn").textContent = "源: " + C().label;
+    render();
+  };
+  el("lb").onclick=()=>el("lb").classList.remove("on");
+  document.addEventListener("keydown", e=>{
+    if(e.key==="Escape") el("lb").classList.remove("on");
+    if(e.key==="/" && document.activeElement!==el("q")){ e.preventDefault(); el("q").focus(); }
+  });
+  el("form").addEventListener("change", pmdLoadForm);
+  el("action").addEventListener("change", pmdLoadAction);
+  el("play").onclick=()=>{ P.playing=!P.playing; el("play").classList.toggle("on",P.playing);
+    el("play").textContent=P.playing?"暂停":"播放"; };
+  el("dir").onchange=e=>{ P.dir=+e.target.value; P.frame=0; P.acc=0; pmdDraw(); pmdStat(); pmdStrip(); };
+  el("speed").oninput=e=>{ P.speed=+e.target.value; el("speedVal").textContent=P.speed+"x"; };
+  el("zoom").oninput=e=>{ P.zoom=+e.target.value; el("zoomVal").textContent=P.zoom+"x"; pmdDraw(); };
+  el("shadow").onclick=()=>{ P.shadow=!P.shadow; el("shadow").classList.toggle("on",P.shadow); pmdLoadAction(); };
+  el("eight").onclick=()=>{ P.eight=!P.eight; el("eight").classList.toggle("on",P.eight);
+    el("stripP").classList.toggle("on",P.eight); pmdStrip(); };
+  document.addEventListener("keydown", e=>{
+    if(S.mode!=="pmd"||["INPUT","SELECT","TEXTAREA"].includes(e.target.tagName)) return;
+    if(e.code==="Space"){ e.preventDefault(); el("play").click(); }
+    else if(e.code==="ArrowLeft"||e.code==="ArrowRight"){
+      P.dir=(P.dir+(e.code==="ArrowRight"?1:7))%8; el("dir").value=P.dir;
+      P.frame=0; pmdDraw(); pmdStat(); pmdStrip(); }
+    else if(e.code==="ArrowUp"||e.code==="ArrowDown"){
+      const a=el("action"); let i=a.selectedIndex+(e.code==="ArrowDown"?1:-1);
+      i=(i+a.length)%a.length; a.selectedIndex=i; pmdLoadAction(); }
+  });
+}
+
+function setMode(m){
+  S.mode=m; S.query=""; el("q").value="";
+  el("pmdWrap").classList.toggle("on", m==="pmd");
+  el("content").style.display = m==="pmd" ? "none" : "";
+  el("bar").style.display = m==="about" ? "none" : "";
+  if(m==="showdown"){ buildTree(); render(); el("q").placeholder="搜索名字（跨全部系列）…"; }
+  else if(m==="pmd"){ buildPmdTree(); }
+  else if(m==="official"){ buildOffTree(); render(); }
+  else if(m==="cafe"){ buildCafeTree(); render(); }
+  else if(m==="about"){ renderAbout(); }
+}
+
+/* ---------------- showdown ---------------- */
+function buildTree(){
+  const tree=el("tree"); tree.innerHTML="";
+  for(const g of S.groups){
+    const h=document.createElement("div"); h.className="grp"; h.textContent=g.title; tree.appendChild(h);
+    for(const id of g.subs){
+      const s=S.subs.find(x=>x.id===id); if(!s) continue;
+      const d=document.createElement("div"); d.className="sub"+(id===S.sub?" on":"");
+      d.dataset.sub=id;
+      d.innerHTML=`<span>${id}</span><span class="n">${s.count}</span>`;
+      d.title=s.label;
+      d.onclick=()=>{ S.sub=id;
+        document.querySelectorAll(".sub").forEach(x=>x.classList.toggle("on",x.dataset.sub===id));
+        render(); };
+      tree.appendChild(d);
+    }
+  }
+}
+
+function subList(id){
+  const D = window.__DATA__;
+  if(!S.subCache[id]){
+    S.subCache[id] = (D && D.showdown && D.showdown[id])
+      ? Promise.resolve(D.showdown[id])
+      : fetch("data/showdown/"+id+".json").then(r=>r.json());
+  }
+  return S.subCache[id];
+}
+
+function render(){
+  if(S.mode==="pmd"||S.mode==="about") return;
+  const c=el("content"); c.innerHTML="";
+  if(S.mode==="showdown") return renderShowdown(c);
+  if(S.mode==="official") return renderOfficial(c);
+  if(S.mode==="cafe") return renderCafe(c);
+}
+
+let shown=200;
+async function renderShowdown(c){
+  if(!S.query){
+    const list = await subList(S.sub);
+    shown = 200;
+    drawSdGrid(c, list.map(n=>[n, S.sub]));
+    el("stat").textContent = `${S.sub} · ${list.length} 个文件`;
+    return;
+  }
+  const subs = S.cross ? S.subIds : [S.sub];
+  const subIdx = S.subIds.indexOf(S.sub);
+  let names = Object.keys(S.nameMap).filter(n=>n.includes(S.query));
+  const items=[];
+  for(const n of names){
+    const where = S.nameMap[n];
+    const pick = S.cross ? where.map(i=>S.subIds[i]) : (where.includes(subIdx)?[S.sub]:where.map(i=>S.subIds[i]));
+    items.push([n, pick[0], pick]);
+  }
+  shown = 200;
+  drawSdGrid(c, items, true);
+  el("stat").textContent = `${names.length} 个名字匹配`;
+}
+
+function drawSdGrid(c, items, multi=false){
+  const g=document.createElement("div"); g.className="grid";
+  for(const it of items.slice(0, shown)){
+    const [name, sub, alts] = it;
+    const s = S.subs.find(x=>x.id===sub) || S.subs[0];
+    const img=document.createElement("img");
+    img.loading="lazy";
+    img.onload=()=>img.classList.add("ok");
+    const urls = (alts&&alts.length?alts:[sub]).map(sb=>sprites.showdown(sb,name,S.subs.find(x=>x.id===sb).ext));
+    let k=0;
+    img.onerror=()=>{ img.onerror=null; if(++k<urls.length) img.src=urls[k];
+      else { const p=img.parentElement; if(p) p.innerHTML='<span style="color:#5b6675;font-size:10px">无图</span>'; } };
+    img.src=urls[0];
+    const cd=document.createElement("div"); cd.className="card";
+    cd.innerHTML=`<div class="box"></div><div class="cap"><b>${name}</b>`+
+      (multi?`<br><span style="color:#8b98a9">${(alts||[]).length} 个系列</span>`:"")+`</div>`;
+    cd.querySelector(".box").appendChild(img);
+    cd.onclick=()=>openLB(name);
+    g.appendChild(cd);
+  }
+  c.appendChild(g);
+  if(items.length > shown){
+    const b=document.createElement("button"); b.className="mini"; b.id="more";
+    b.textContent=`显示更多（还有 ${items.length-shown} 张）`;
+    b.onclick=()=>{ shown+=200; c.innerHTML=""; drawSdGrid(c, items, multi); };
+    c.appendChild(b);
+  }
+}
+
+function openLB(name){
+  const subs = S.nameMap[name] || [];
+  el("lbImg").onerror=null;
+  const first = subs.length ? S.subIds[subs[0]] : S.sub;
+  const alts=[];
+  for(const i of subs){
+    const sb=S.subIds[i], s=S.subs.find(x=>x.id===sb);
+    alts.push(sprites.showdown(sb,name,s.ext));
+  }
+  if(!alts.length) alts.push(sprites.showdown(S.sub,name,S.subs.find(x=>x.id===S.sub).ext));
+  let k=0;
+  el("lbImg").onerror=()=>{ el("lbImg").onerror=null; if(++k<alts.length) el("lbImg").src=alts[k]; };
+  el("lbImg").src=alts[0];
+  el("lbCap").innerHTML=`<b>${name}</b> · ${subs.length} 个系列有这张`;
+  const strip=el("lbStrip"); strip.innerHTML="";
+  for(const i of subs){
+    const sb=S.subIds[i], s=S.subs.find(x=>x.id===sb);
+    const f=document.createElement("figure");
+    const im=document.createElement("img"); im.loading="lazy"; im.src=sprites.showdown(sb,name,s.ext);
+    im.title=sb; im.style.cursor="zoom-in";
+    im.onclick=ev=>{ ev.stopPropagation(); el("lbImg").src=im.src; };
+    const fc=document.createElement("figcaption"); fc.textContent=sb;
+    f.appendChild(im); f.appendChild(fc); strip.appendChild(f);
+  }
+  el("lb").classList.add("on");
+}
+
+
+/* ---------------- Café ReMix（只在部署了 PokemonCafeRemix 时可用） ---------------- */
+async function probeCafe(){
+  if(S.cafeOk) return true;
+  try{
+    const r = await fetch("PokemonCafeRemix/index.json");
+    if(!r.ok) throw new Error(r.status);
+    const raw = await r.json();
+    // index.json 用完整字段名，这里归一成 UI 用的短名
+    S.cafe = raw.map(x => ({g:x.group, s:x.species||"", o:x.outfit||"",
+                            c:x.customer?1:0, f:x.file, w:x.w, h:x.h}));
+    S.cafeOk = true;
+    el("tabCafe").style.display = "";
+    return true;
+  }catch(e){
+    return false;                       // 没有 Café 资源就安静隐藏
+  }
+}
+
+const cafeURL = f => "PokemonCafeRemix/" + f.split("/").map(encodeURIComponent).join("/");
+
+function buildCafeTree(){
+  const tree=el("tree"); tree.innerHTML="";
+  const mk=(label,count,on,fn)=>{ const d=document.createElement("div");
+    d.className="sub"+(on?" on":""); d.innerHTML=`<span>${label}</span><span class="n">${count}</span>`;
+    d.onclick=fn; tree.appendChild(d); };
+  const h=document.createElement("div"); h.className="grp"; h.textContent="Café ReMix · 分类"; tree.appendChild(h);
+  mk("全部", S.cafe.length, !S.cafeGroup, ()=>{ S.cafeGroup=""; buildCafeTree(); render(); });
+  mk("立绘 Artwork", S.cafe.filter(r=>r.g==="Artwork").length, S.cafeGroup==="Artwork",
+     ()=>{ S.cafeGroup="Artwork"; buildCafeTree(); render(); });
+  mk("头像 Portraits", S.cafe.filter(r=>r.g==="Portraits").length, S.cafeGroup==="Portraits",
+     ()=>{ S.cafeGroup="Portraits"; buildCafeTree(); render(); });
+  mk("顾客 Customer", S.cafe.filter(r=>r.c).length, S.cafeGroup==="customer",
+     ()=>{ S.cafeGroup="customer"; buildCafeTree(); render(); });
+  const species=[...new Set(S.cafe.map(r=>r.s).filter(Boolean))].sort();
+  const h2=document.createElement("div"); h2.className="grp"; h2.textContent=`宝可梦 · ${species.length}`; tree.appendChild(h2);
+  for(const sp of species){
+    const d=document.createElement("div"); d.className="sub";
+    d.innerHTML=`<span>${sp}</span><span class="n">${S.cafe.filter(r=>r.s===sp).length}</span>`;
+    d.onclick=()=>{ el("q").value=sp; S.query=sp.toLowerCase(); render(); };
+    tree.appendChild(d);
+  }
+}
+
+function renderCafe(c){
+  const q=S.query;
+  let list=S.cafe;
+  if(S.cafeGroup==="customer") list=list.filter(r=>r.c);
+  else if(S.cafeGroup) list=list.filter(r=>r.g===S.cafeGroup);
+  if(q) list=list.filter(r=>(r.s+" "+r.o+" "+r.f).toLowerCase().includes(q));
+  shown = 120;
+  const g=document.createElement("div"); g.className="grid";
+  g.style.gridTemplateColumns="repeat(auto-fill,minmax(120px,1fr))";
+  for(const r of list.slice(0, shown)){
+    const url=cafeURL(r.f);
+    const cd=document.createElement("div"); cd.className="card";
+    cd.innerHTML=`<div class="box"></div><div class="cap"><b>${r.s||"?"}</b><br>${r.o||""}</div>`;
+    const im=document.createElement("img"); im.loading="lazy"; im.src=url;
+    im.onload=()=>im.classList.add("ok");
+    cd.querySelector(".box").appendChild(im);
+    cd.onclick=()=>{
+      el("lbImg").onerror=null; el("lbImg").src=url;
+      el("lbCap").innerHTML=`<b>${r.s}</b> · ${r.o||"—"} · ${r.w}×${r.h}`;
+      el("lbStrip").innerHTML=""; el("lb").classList.add("on");
+    };
+    g.appendChild(cd);
+  }
+  c.appendChild(g);
+  if(list.length>shown){
+    const b=document.createElement("button"); b.className="mini"; b.id="more";
+    b.textContent=`显示更多（还有 ${list.length-shown} 张）`;
+    b.onclick=()=>{ shown+=120; c.innerHTML=""; renderCafe(c); };
+    c.appendChild(b);
+  }
+  el("stat").textContent=`Café ReMix · ${list.length} 张`;
+}
+
+/* ---------------- official ---------------- */
+function buildOffTree(){
+  const tree=el("tree"); tree.innerHTML="";
+  const h=document.createElement("div"); h.className="grp"; h.textContent="PokeAPI 官方素材"; tree.appendChild(h);
+  const mk=(label,on,fn)=>{ const d=document.createElement("div");
+    d.className="sub"+(on?" on":""); d.innerHTML=`<span>${label}</span><span class="n">${S.official.length}</span>`;
+    d.onclick=fn; tree.appendChild(d); };
+  mk("官方设定画 475px", S.offKind==="official-artwork"&&!S.offShiny,
+     ()=>{ S.offKind="official-artwork"; S.offShiny=false; buildOffTree(); render(); });
+  mk("官方设定画 · 异色", S.offKind==="official-artwork"&&S.offShiny,
+     ()=>{ S.offKind="official-artwork"; S.offShiny=true; buildOffTree(); render(); });
+  mk("HOME 渲染", S.offKind==="home"&&!S.offShiny,
+     ()=>{ S.offKind="home"; S.offShiny=false; buildOffTree(); render(); });
+  mk("HOME 渲染 · 异色", S.offKind==="home"&&S.offShiny,
+     ()=>{ S.offKind="home"; S.offShiny=true; buildOffTree(); render(); });
+  const p=document.createElement("div");
+  p.style.cssText="padding:8px 12px;color:#8b98a9;font-size:11px;line-height:1.6";
+  p.textContent="图鉴 1–1025 + 全部形态（10001 起）。文件名就是 PokeAPI 的 id。";
+  tree.appendChild(p);
+}
+
+function renderOfficial(c){
+  const q=S.query;
+  const list=S.official.filter(o=>!q || o.name.includes(q) || String(o.id)===q);
+  const g=document.createElement("div"); g.className="grid";
+  g.style.gridTemplateColumns="repeat(auto-fill,minmax(120px,1fr))";
+  for(const o of list.slice(0,120)){
+    const url=sprites.offArt(o.id);
+    const cd=document.createElement("div"); cd.className="card";
+    cd.innerHTML=`<div class="box"></div><div class="cap"><b>${o.name}</b><br>${o.id}</div>`;
+    const im=document.createElement("img"); im.loading="lazy"; im.src=url;
+    im.onload=()=>im.classList.add("ok");
+    im.onerror=()=>{ im.onerror=null; const p=im.parentElement; p.innerHTML='<span style="color:#5b6675;font-size:10px">无图</span>'; };
+    cd.querySelector(".box").appendChild(im);
+    cd.onclick=()=>{
+      el("lbImg").onerror=null; el("lbImg").src=url;
+      el("lbCap").innerHTML=`<b>${o.name}</b> · id ${o.id} · ${S.offKind}${S.offShiny?" shiny":""}`;
+      el("lbStrip").innerHTML=""; el("lb").classList.add("on");
+    };
+    g.appendChild(cd);
+  }
+  c.appendChild(g);
+  el("stat").textContent=`${list.length} 张`+(list.length>120?"（显示前 120，用搜索缩小）":"");
+}
+
+/* ---------------- PMD ---------------- */
+const P={cur:null,forms:[],actions:[],action:null,anim:null,shadow:null,frame:0,acc:0,last:0,
+  playing:true,speed:1,zoom:4,dir:0,eight:false,shadowOn:false,req:0};
+const PDIRS=["下","右下","右","右上","上","左上","左","左下"];
+Object.defineProperty(P,"showShadow",{get(){return this.shadowOn;}});
+P.shadow = false;
+
+function buildPmdTree(){
+  const tree=el("tree"); tree.innerHTML="";
+  const h=document.createElement("div"); h.className="grp";
+  h.textContent=`不可思议迷宫 · ${S.pmd.length}`; tree.appendChild(h);
+  for(const m of S.pmd){
+    const d=document.createElement("div"); d.className="sub"+(m.dex===P.cur?" on":"");
+    d.dataset.dex=m.dex; d.dataset.name=m.name.toLowerCase();
+    d.innerHTML=`<span>${m.name.replace(/_$/,"")}</span><span class="n">${m.dex}</span>`;
+    d.onclick=()=>pmdSelect(m);
+    tree.appendChild(d);
+  }
+  el("sideHint").textContent=`PMD · ${S.pmd.length} 只宝可梦`;
+  const ds=el("dir"); ds.innerHTML="";
+  PDIRS.forEach((x,i)=>{ const o=document.createElement("option"); o.value=i; o.textContent=i+" · "+x; ds.appendChild(o); });
+  if(!P.cur) pmdSelect(S.pmd.find(m=>m.name==="Lucario") || S.pmd[0]);
+  requestAnimationFrame(pmdLoop);
+}
+
+function filterPmd(q){
+  let n=0;
+  document.querySelectorAll("#tree .sub").forEach(d=>{
+    const ok = !q || d.dataset.name.includes(q) || d.dataset.dex.includes(q);
+    d.style.display = ok?"":"none"; if(ok) n++;
+  });
+  el("sideHint").textContent = q ? `PMD · ${n} 个匹配` : `PMD · ${S.pmd.length} 只宝可梦`;
+}
+
+async function pmdSelect(m){
+  P.cur=m;
+  document.querySelectorAll("#tree .sub").forEach(x=>x.classList.toggle("on", x.dataset.dex===m.dex));
+  const fs=el("form"); fs.innerHTML="";
+  for(const [i,f] of m.forms.entries()){
+    const o=document.createElement("option"); o.value=i; o.textContent=f.n || "基础形态";
+    fs.appendChild(o);
+  }
+  fs.value = 0;
+  el("pName").textContent = `${m.name} (${m.dex})`;
+  await pmdLoadForm();
+}
+
+function curForm(){ const m=P.cur; return m ? m.forms[+el("form").value] : null; }
+
+async function pmdLoadForm(){
+  const m=P.cur, f=curForm(); if(!m||!f) return;
+  let xml;
+  try{
+    const r = await fetch(sprites.pmdXml(m.dex, f.p));
+    if(!r.ok) throw new Error(r.status);
+    xml = await r.text();
+  }catch(e){
+    P.actions=[]; P.action=null; el("action").innerHTML=""; el("pActs").textContent="0";
+    el("pFrame").innerHTML='<span class="err">该形态没有动作数据</span>';
+    const cv=el("cvP"); cv.width=1; cv.height=1; return;
+  }
+  const doc=new DOMParser().parseFromString(xml,"application/xml");
+  const txt=(n,t)=>{ const e=n.querySelector(t); return e?e.textContent.trim():""; };
+  P.actions=[...doc.querySelectorAll("Anims > Anim")].map(a=>({
+    name: txt(a,"Name"),
+    fw: +txt(a,"FrameWidth"), fh: +txt(a,"FrameHeight"),
+    durations: [...a.querySelectorAll("Durations > Duration")].map(d=>+d.textContent)
+  })).filter(a=>a.fw>0 && a.fh>0);
+  const as=el("action"); as.innerHTML="";
+  P.actions.forEach((a,i)=>{ const o=document.createElement("option"); o.value=i;
+    o.textContent=`${a.name}  (${a.durations.length}帧)`; as.appendChild(o); });
+  el("pActs").textContent=P.actions.length;
+  if(P.actions.length){
+    let i=P.actions.findIndex(a=>a.name==="Idle"); as.value = i>=0?i:0;
+    await pmdLoadAction();
+  }
+}
+
+function pimg(src){
+  return new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i);
+    i.onerror=()=>rej(new Error(src)); i.src=src; });
+}
+
+async function pmdLoadAction(){
+  const m=P.cur, f=curForm(), a=P.actions[+el("action").value];
+  if(!m||!f||!a) return;
+  const token=++P.req; P.action=a; P.frame=0; P.acc=0;
+  try{
+    const jobs=[pimg(sprites.pmd(m.dex,f.p,a.name,"Anim"))];
+    jobs.push(P.shadowOn ? pimg(sprites.pmd(m.dex,f.p,a.name,"Shadow")).catch(()=>null) : null);
+    const [anim,shadow]=await Promise.all(jobs);
+    if(token!==P.req) return;
+    P.anim=anim; P.shadow=shadow; pmdDraw(); pmdStat(); pmdStrip();
+  }catch(e){
+    P.anim=null;
+    el("pFrame").innerHTML='<span class="err">缺少 '+a.name+'-Anim.png</span>';
+  }
+}
+
+function pmdDraw(){
+  const a=P.action, cv=el("cvP"), ctx=cv.getContext("2d");
+  if(!a||!P.anim){ cv.width=1; cv.height=1; return; }
+  const w=a.fw*P.zoom, h=a.fh*P.zoom; cv.width=w; cv.height=h;
+  ctx.imageSmoothingEnabled=false; ctx.clearRect(0,0,w,h);
+  if(P.shadowOn && P.shadow){ ctx.globalAlpha=.45;
+    ctx.drawImage(P.shadow, P.frame*a.fw, P.dir*a.fh, a.fw, a.fh, 0,0,w,h); ctx.globalAlpha=1; }
+  ctx.drawImage(P.anim, P.frame*a.fw, P.dir*a.fh, a.fw, a.fh, 0,0,w,h);
+}
+
+function pmdStrip(){
+  const cv=el("cv8"), ctx=cv.getContext("2d"), a=P.action;
+  if(!P.eight||!P.anim||!a){ cv.width=1; cv.height=1; return; }
+  const z=Math.max(1,Math.min(3,Math.floor(96/a.fh))), w=a.fw*z, h=a.fh*z;
+  cv.width=w*8+7*6; cv.height=h; ctx.imageSmoothingEnabled=false;
+  ctx.clearRect(0,0,cv.width,cv.height);
+  for(let d=0;d<8;d++){ const x=d*(w+6);
+    if(d===P.dir){ ctx.fillStyle="#24405f"; ctx.fillRect(x-2,-2,w+4,h+4); }
+    ctx.drawImage(P.anim, 0, d*a.fh, a.fw, a.fh, x,0,w,h); }
+}
+
+function pmdStat(){
+  const a=P.action; if(!a) return;
+  el("pFrame").textContent=`${P.frame+1}/${a.durations.length} · ${PDIRS[P.dir]}`;
+  el("pSize").textContent=`${a.fw}×${a.fh}`;
+}
+
+function pmdLoop(t){
+  requestAnimationFrame(pmdLoop);
+  const a=P.action; if(!a||!P.anim) return;
+  const dt=P.last?(t-P.last)/1000:0; P.last=t;
+  if(!P.playing) return;
+  let ch=false; P.acc+=dt*60*P.speed; let g=0;
+  while(P.acc>=(a.durations[P.frame]??1) && g++<60){
+    P.acc-=(a.durations[P.frame]??1); P.frame=(P.frame+1)%a.durations.length; ch=true;
+  }
+  if(ch){ pmdDraw(); pmdStat(); }
+}
+
+/* ---------------- about ---------------- */
+function renderAbout(){
+  el("content").innerHTML = `
+  <h2 style="color:#ffb84a;font-size:15px;margin:0 0 12px">这是在线版：图片全部直连公有 CDN</h2>
+  <div class="note">
+    <p><b>Showdown</b> — play.pokemonshowdown.com/sprites/ · 61 个子目录，全部可直连</p>
+    <p><b>PMD</b> — raw.githubusercontent.com/PMDCollab/SpriteCollab · 序列帧 + AnimData.xml 都是现拉的</p>
+    <p><b>官方立绘</b> — raw.githubusercontent.com/PokeAPI/sprites · 官方设定画 / HOME 渲染</p>
+    <p style="color:#ff7b78"><b>Café ReMix</b> —— 源站 Bulbagarden 有 Cloudflare，不能直连；
+    本部署把 1875 张官方立绘放在了本站 <code>PokemonCafeRemix/</code> 下，
+    打开时能读到就自动出现该页签。</p>
+    <p>右上角「源」按钮可以在 GitHub raw 和 jsDelivr 之间切换：国内 jsDelivr 主域
+    （cdn.jsdelivr.net）经常连不上，但 fastly 镜像可以。</p>
+    <p>图片是直连别人的服务器，不缓存、不代理；用的人多可能被限流。</p>
+  </div>`;
+  el("stat").textContent="";
+}
+
+/* ---------------- 图片地址（供排查） ---------------- */
+window.__src = sprites;
+window.__state = S;
+</script>
+</body>
+</html>
