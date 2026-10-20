@@ -475,7 +475,9 @@ async function loadData(){
     f: x.f != null ? x.f : x.file,
     w: x.w, h: x.h
   }));
+  S.codename = 'Felis';
   S.build = await j('data/build.json').catch(()=>({appVersion:'1.0', cafeVersion:'', cafeCount:S.cafe.length}));
+  S.codename = (S.build && S.build.codename) || 'Felis';
 }
 
 /* ---------------- 图片地址 ---------------- */
@@ -886,6 +888,8 @@ function dispName(idOrName){
   const raw = String(idOrName || '');
   if(!raw) return '';
   const lang = localStorage.getItem('lang') || 'zh';
+  const verLine = `<div class="row"><div><div>${S.codename} · ${(S.build && S.build.appVersion) || '1.1.0'}</div>
+      <div class="sub">PokePic 当前版本（内部 ${(S.build && S.build.appVersion) || '1.1.0'}）</div></div></div>`;
   if(lang === 'en') return titleCase(raw);
 
   const key = raw.toLowerCase().replace(/\s+/g, '-');
@@ -1410,6 +1414,7 @@ async function renderSet(){
   const lang = localStorage.getItem('lang') || 'zh';
   const lefty = localStorage.getItem('lefty') === '1';
   $('#setRows').innerHTML = `
+    ${verLine}
     <div class="row" id="rowUpdate"><div><div>检查更新</div>
       <div class="sub">从 GitHub 拉最新素材与安装包</div></div>
       <div class="val">›</div></div>
@@ -1464,7 +1469,7 @@ async function renderSet(){
   $('#pickCols').onclick = ()=>{ let c = (+localStorage.getItem('cols')||3)+1; if(c>4) c=2;
     localStorage.setItem('cols',c); document.documentElement.style.setProperty('--gr',c);
     $('#pickCols').textContent = c+' 列'; renderSd(); renderCf(); };
-  $('#about').innerHTML = `PokePic ${S.build?S.build.appVersion:'1.0'} · 数据来自 Showdown / PMD Collab / PokeAPI<br>
+  $('#about').innerHTML = `PokePic ${S.codename} · ${S.build?S.build.appVersion:'1.1.0'} · 数据来自 Showdown / PMD Collab / PokeAPI<br>
     素材版权归 The Pokémon Company，仅供个人查阅。<br><br>作者：ACMinerva`;
 }
 
@@ -1476,16 +1481,20 @@ async function downloadApk(){
   try{ a = JSON.parse(localStorage.getItem('apkNew') || 'null'); }catch(e){}
   if(!a || !a.u){ toast('没有可用的下载地址'); return; }
 
-  if(!nativeOK){ location.href = a.u; return; }
+  const urls = [a.u, a.bu].filter(Boolean);
+  if(!nativeOK){ location.href = urls[0]; return; }
 
   progShow('下载 ' + a.v);
-  let id = null;
-  try{
-    const r = await (await fetch(BRIDGE + '__dl?name=' + encodeURIComponent('PokePic-' + a.v + '.apk') +
-                                 '&url=' + encodeURIComponent(a.u), {cache:'no-store'})).json();
-    if(!r.id) throw new Error(r.msg || '无法开始下载');
-    id = r.id;
-  }catch(e){ progHide(); toast('下载启动失败：' + e.message); return; }
+  let id = null, lastErr = '';
+  for(const u of urls){
+    try{
+      const r = await (await fetch(BRIDGE + '__dl?name=' + encodeURIComponent('PokePic-' + a.v + '.apk') +
+                                   '&url=' + encodeURIComponent(u), {cache:'no-store'})).json();
+      if(!r.id){ lastErr = r.msg || '无法开始下载'; continue; }
+      id = r.id; break;
+    }catch(e){ lastErr = e.message; }
+  }
+  if(!id){ progHide(); toast('下载启动失败：' + lastErr); return; }
 
   for(let i = 0; i < 3600; i++){          // 最多等 30 分钟
     await new Promise(r => setTimeout(r, 500));
@@ -1497,7 +1506,9 @@ async function downloadApk(){
       await fetch(BRIDGE + '__open?uri=' + encodeURIComponent(st.msg)).catch(()=>{});
       return;
     }
-    if(st.state === 'err'){ progHide(); toast('下载失败：' + (st.msg || '未知'), 4500); return; }
+    if(st.state === 'err'){
+      progHide(); toast('下载失败：' + (st.msg || '未知'), 4500); return;
+    }
     progSet(st.pct || 0, 100, `下载 ${a.v}（${st.pct || 0}%）`);
   }
   progHide();
@@ -1548,7 +1559,7 @@ async function checkUpdate(){
     progHide();
     const hasNew = up.apkVersion && isNewer(up.apkVersion, cur.appVersion);
     if(hasNew && up.apkUrl){
-      localStorage.setItem('apkNew', JSON.stringify({v:up.apkVersion, u:up.apkUrl}));
+      localStorage.setItem('apkNew', JSON.stringify({v:up.apkVersion, u:up.apkUrl, bu:up.apkUrlBackup || ''}));
       toast('发现新版本 ' + up.apkVersion + '，点这里下载安装', 4000);
     } else {
       localStorage.removeItem('apkNew');
