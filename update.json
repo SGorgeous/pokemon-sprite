@@ -1,9 +1,9 @@
-{
-  "note": "PokePic：App 启动 4 秒后静默检查一次；设置里「检查更新」也能手动查",
-  "apkUrl": "https://github.com/SGorgeous/pokemon-sprite/releases/download/v1.0.10/PokePic.apk",
-  "cafeVersion": "1875-388080539",
-  "apkVersion": "1.0.10",
-  "updatedAt": "2026-10-20",
-  "appVersion": "1.0.10",
-  "cafeCount": 1875
+﻿{
+    "note":  "PokePic：启动 4 秒后静默检查；设置里点「检查更新」也能手动查，发现新版本可直接下载安装",
+    "updatedAt":  "2026-10-20",
+    "cafeVersion":  "1875-388080539",
+    "apkVersion":  "1.0.11",
+    "appVersion":  "1.0.11",
+    "cafeCount":  1875,
+    "apkUrl":  "https://sgorgeous.github.io/pokemon-sprite/apk/PokePic-1.0.11.apk"
 }

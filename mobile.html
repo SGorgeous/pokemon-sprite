@@ -1422,7 +1422,7 @@ async function renderSet(){
     <div class="row"><div><div>操作手</div><div class="sub">决定迷宫分类栏在左还是右</div></div>
       <div class="val" id="pickHand">${lefty ? '左手' : '右手'}</div></div>
     ${(()=>{ try{ const a=JSON.parse(localStorage.getItem('apkNew')||'null');
-      return a && a.u ? `<div class="row"><div><div>新版本 ${a.v}</div><div class="sub">安装包 ${(S.build&&S.build.appVersion)||''} → ${a.v}</div></div><div class="val" id="apkGet">下载</div></div>` : '';
+      return a && a.u ? `<div class="row"><div><div>新版本 ${a.v}</div><div class="sub">从 GitHub 直接下载并安装（${(S.build&&S.build.appVersion)||''} → ${a.v}）</div></div><div class="val" id="apkGet">下载</div></div>` : '';
     }catch(e){ return ''; } })()}
     <div class="row"><div><div>存储权限</div><div class="sub" id="permState">检测中…</div></div>
       <div class="val" id="permAsk">申请</div></div>
@@ -1453,11 +1453,7 @@ async function renderSet(){
     setTimeout(()=>renderSet(), 1500);
   };
   const apkGet = $('#apkGet');
-  if(apkGet) apkGet.onclick = ()=>{
-    try{ const a = JSON.parse(localStorage.getItem('apkNew')||'null');
-      if(a && a.u){ toast('正在打开下载页…', 1500); location.href = a.u; }
-    }catch(e){ toast('地址无效'); }
-  };
+  if(apkGet){ apkGet.textContent = '下载'; apkGet.onclick = downloadApk; }
   $('#brTest').onclick = async ()=>{
     const first = S.cafe[0];
     if(!first){ toast('没有可测试的图'); return; }
@@ -1473,6 +1469,41 @@ async function renderSet(){
 }
 
 /* 从 GitHub 检查更新：Café 增量 + 数据刷新 */
+/* 从 GitHub Release 直接下载新版本 APK，下完拉起系统安装器。
+   App 里走原生桥；浏览器里没有桥，就退化成打开 Release 页面。 */
+async function downloadApk(){
+  let a = null;
+  try{ a = JSON.parse(localStorage.getItem('apkNew') || 'null'); }catch(e){}
+  if(!a || !a.u){ toast('没有可用的下载地址'); return; }
+
+  if(!nativeOK){ location.href = a.u; return; }
+
+  progShow('下载 ' + a.v);
+  let id = null;
+  try{
+    const r = await (await fetch(BRIDGE + '__dl?name=' + encodeURIComponent('PokePic-' + a.v + '.apk') +
+                                 '&url=' + encodeURIComponent(a.u), {cache:'no-store'})).json();
+    if(!r.id) throw new Error(r.msg || '无法开始下载');
+    id = r.id;
+  }catch(e){ progHide(); toast('下载启动失败：' + e.message); return; }
+
+  for(let i = 0; i < 3600; i++){          // 最多等 30 分钟
+    await new Promise(r => setTimeout(r, 500));
+    let st = {};
+    try{ st = await (await fetch(BRIDGE + '__dlstatus?id=' + id, {cache:'no-store'})).json(); }catch(e){ continue; }
+    if(st.state === 'ok'){
+      progHide();
+      toast('下载完成，正在打开安装器…', 2500);
+      await fetch(BRIDGE + '__open?uri=' + encodeURIComponent(st.msg)).catch(()=>{});
+      return;
+    }
+    if(st.state === 'err'){ progHide(); toast('下载失败：' + (st.msg || '未知'), 4500); return; }
+    progSet(st.pct || 0, 100, `下载 ${a.v}（${st.pct || 0}%）`);
+  }
+  progHide();
+  toast('下载超时，可在设置里重试');
+}
+
 async function checkUpdate(){
   progShow('检查更新');
   try{
@@ -1518,7 +1549,7 @@ async function checkUpdate(){
     const hasNew = up.apkVersion && isNewer(up.apkVersion, cur.appVersion);
     if(hasNew && up.apkUrl){
       localStorage.setItem('apkNew', JSON.stringify({v:up.apkVersion, u:up.apkUrl}));
-      toast('发现新版本 ' + up.apkVersion + '，去设置里下载', 3200);
+      toast('发现新版本 ' + up.apkVersion + '，点这里下载安装', 4000);
     } else {
       localStorage.removeItem('apkNew');
       toast('已是最新');
