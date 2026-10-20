@@ -36,7 +36,7 @@ header{flex:none;display:flex;align-items:center;gap:8px;
 
 /* ---------- 内容 ---------- */
 #views{flex:1;min-height:0;position:relative}
-.view{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;
+.view{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--fab) - 30px);
   padding-bottom:calc(var(--nav) + var(--safe-b) + 12px);display:none}
 .view.on{display:block}
 
@@ -66,7 +66,8 @@ header{flex:none;display:flex;align-items:center;gap:8px;
   font-size:13px;color:#fff}
 .card .tick.on{background:var(--acc);border-color:var(--acc)}
 .card.sel .tick{display:flex}
-#moreBtn{display:block;margin:6px auto 20px;padding:10px 26px;border-radius:20px;background:var(--panel2);
+.moreWrap{text-align:center;padding:2px 12px 22px}
+.moreBtn{display:inline-block;padding:10px 26px;border-radius:20px;background:#fff;box-shadow:var(--shadow);
   border:1px solid var(--line);color:var(--fg);font-size:13px}
 
 /* 列表（PMD / 设置） */
@@ -81,7 +82,7 @@ header{flex:none;display:flex;align-items:center;gap:8px;
 #pmdTop{display:flex;gap:8px;padding:10px 12px;flex-wrap:wrap;align-items:center;border-bottom:1px solid var(--line)}
 #pmdTop select{background:var(--panel2);color:var(--fg);border:1px solid var(--line);border-radius:8px;
   padding:8px 10px;font-size:13px;font-family:inherit}
-#pmdCanvasWrap{flex:none;height:min(42vh,320px);min-height:180px;margin:10px;
+#pmdCanvasWrap{flex:1;min-height:120px;margin:10px;
   display:flex;align-items:center;justify-content:center;border-radius:16px;border:1px solid var(--line);
   background-color:#fbfdff;
   background-image:linear-gradient(45deg,#eef3f9 25%,transparent 25%,transparent 75%,#eef3f9 75%),
@@ -141,7 +142,7 @@ header{flex:none;display:flex;align-items:center;gap:8px;
   .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr)) !important}
   .card .box{height:140px}
 }
-.pstrip{display:flex;gap:8px;overflow-x:auto;padding:8px 12px;border-top:1px solid var(--line);
+.pstrip{flex:none;display:flex;gap:8px;overflow-x:auto;overflow-y:hidden;padding:8px 12px;border-top:1px solid var(--line);-webkit-overflow-scrolling:touch;overscroll-behavior:contain;
   background:var(--panel);scrollbar-width:none}
 .pstrip::-webkit-scrollbar{display:none}
 .pcell{flex:none;width:62px;text-align:center;cursor:pointer}
@@ -172,11 +173,13 @@ header{flex:none;display:flex;align-items:center;gap:8px;
   padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--fg)}
 #chipFull .fb{flex:1;overflow:auto;padding:12px;display:flex;flex-wrap:wrap;gap:8px;align-content:flex-start}
 #chipFull .fb .chip{font-size:13px;padding:8px 14px}
-#pmdLayout{flex:1;display:flex;min-height:0}
+#v-pmd{overflow:hidden;padding-bottom:0}
+#v-pmd.on{display:flex;flex-direction:column}
+#pmdLayout{flex:1;display:flex;min-height:0;overflow:hidden}
 #pmdLayout.lefty{flex-direction:row-reverse}
-#pmdMain{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
+#pmdMain{flex:1;min-width:0;display:flex;flex-direction:column;overflow:hidden;padding-bottom:calc(var(--fab) - 8px)}
 .sidecol{flex:none;width:34%;max-width:180px;min-width:100px;overflow-y:auto;
-  border-left:1px solid var(--line);display:flex;flex-direction:column;gap:6px;padding:8px 6px}
+  border-left:1px solid var(--line);display:flex;flex-direction:column;gap:6px;padding:8px 6px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 #pmdLayout.lefty .sidecol{border-left:0;border-right:1px solid var(--line)}
 .sidecol .chip{flex:none;font-size:11.5px;padding:7px 6px;text-align:center;border-radius:9px}
 #fab{position:fixed;left:50%;bottom:calc(var(--safe-b) + 12px);transform:translateX(-50%);
@@ -216,7 +219,7 @@ header{flex:none;display:flex;align-items:center;gap:8px;
     <section class="view on" id="v-showdown">
       <div class="chipbar"><button class="chipExpand" id="sdExpand">▾</button>
         <div class="chips" id="sdChips"></div></div>
-      <div class="grid" id="sdGrid"></div>
+      <div class="grid" id="sdGrid"></div><div class="moreWrap" id="sdMore"></div>
     </section>
 
     <section class="view" id="v-pmd">
@@ -245,13 +248,13 @@ header{flex:none;display:flex;align-items:center;gap:8px;
     <section class="view" id="v-cafe">
       <div class="chipbar"><button class="chipExpand" id="cfExpand">▾</button>
         <div class="chips" id="cfChips"></div></div>
-      <div class="grid" id="cfGrid"></div>
+      <div class="grid" id="cfGrid"></div><div class="moreWrap" id="cfMore"></div>
     </section>
 
     <section class="view" id="v-off">
       <div class="chipbar"><button class="chipExpand" id="offExpand">▾</button>
         <div class="chips" id="offChips"></div></div>
-      <div class="grid" id="offGrid"></div>
+      <div class="grid" id="offGrid"></div><div class="moreWrap" id="offMore"></div>
     </section>
 
     <section class="view" id="v-fav">
@@ -505,6 +508,20 @@ async function srcFor(url){
 }
 
 /* ---------------- 网格渲染 ---------------- */
+/* 统一的「显示更多」：容器固定，渲染时先清空，避免叠出好几个按钮 */
+function moreFor(wrapId, total, shown, onMore){
+  const w = $('#' + wrapId);
+  if(!w) return;
+  w.innerHTML = '';
+  const rest = total - shown;
+  if(rest <= 0) return;
+  const b = document.createElement('button');
+  b.className = 'moreBtn';
+  b.textContent = `显示更多（还有 ${rest}）`;
+  b.onclick = onMore;
+  w.appendChild(b);
+}
+
 function cardEl(opts){
   // opts: {key, url, title, sub, onOpen}
   const d = document.createElement('div');
@@ -616,15 +633,11 @@ async function renderSd(){
     const frag = document.createDocumentFragment();
     for(const n of items) frag.appendChild(cardEl({key:'sd|'+S.sub+'|'+n, url:sdURL(S.sub,n), title:dispName(n)}));
     grid.appendChild(frag);
-    if(names.length > S.shown){
-      const b = document.createElement('button'); b.id='moreBtn';
-      b.textContent = `显示更多（${names.length - S.shown}）`;
-      b.onclick = ()=>{ S.shown += 120; renderSd(); };
-      grid.after(b);
-    } else { const old=$('#moreBtn'); if(old) old.remove(); }
+    moreFor('sdMore', names.length, S.shown, ()=>{ S.shown += 120; renderSd(); });
     grid._items = items;
   } else {
     const q = S.query;
+    moreFor('sdMore', 0, 0, null);            // 搜索结果不分页，清掉按钮
     const names = Object.keys(S.nameMap).filter(n=>n.includes(q)).slice(0, 300);
     grid.innerHTML = '';
     const frag = document.createDocumentFragment();
@@ -635,7 +648,6 @@ async function renderSd(){
                                sub: where.length>1 ? where.length+' 个系列' : ''}));
     }
     grid.appendChild(frag);
-    const old=$('#moreBtn'); if(old) old.remove();
     grid._items = names;
   }
   S.selMode && syncSel();
@@ -667,13 +679,7 @@ function renderCf(){
     frag.appendChild(cardEl({key:'cf|'+r.f, url:cafeURL(r.f), title:dispName(r.s||r.f), sub:r.o, cacheFirst:true}));
   }
   grid.appendChild(frag);
-  const old=$('#moreBtn'); if(old) old.remove();
-  if(list.length > S.shown){
-    const b = document.createElement('button'); b.id='moreBtn';
-    b.textContent = `显示更多（${list.length - S.shown}）`;
-    b.onclick = ()=>{ S.shown += 120; renderCf(); };
-    grid.after(b);
-  }
+  moreFor('cfMore', list.length, S.shown, ()=>{ S.shown += 120; renderCf(); });
   S.selMode && syncSel();
 }
 
@@ -961,13 +967,7 @@ function renderOff(){
     frag.appendChild(card);
   }
   grid.appendChild(frag);
-  const old = $('#moreBtn'); if(old) old.remove();
-  if(list.length > S.shown){
-    const b = document.createElement('button'); b.id = 'moreBtn';
-    b.textContent = `显示更多（${list.length - S.shown}）`;
-    b.onclick = ()=>{ S.shown += 120; renderOff(); };
-    grid.after(b);
-  }
+  moreFor('offMore', list.length, S.shown, ()=>{ S.shown += 120; renderOff(); });
   S.selMode && syncSel();
 }
 
