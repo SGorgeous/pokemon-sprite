@@ -1,11 +1,11 @@
-﻿{
-    "codename":  "Felis",
-    "apkUrlBackup":  "https://sgorgeous.github.io/pokemon-sprite/apk/PokePic.apk",
-    "appVersion":  "1.1.0",
-    "updatedAt":  "2026-10-20",
-    "apkUrl":  "https://github.com/SGorgeous/pokemon-sprite/releases/download/v1.1.0/PokePic-1.1.0-Felis.apk",
-    "apkVersion":  "1.1.0",
-    "cafeCount":  1875,
-    "cafeVersion":  "1875-388080539",
-    "note":  "PokePic Felis：启动 4 秒后静默检查；设置里点「检查更新」，发现新版本可直接下载安装"
+{
+    "codename": "Felis",
+    "apkUrlBackup": "https://sgorgeous.github.io/pokemon-sprite/apk/PokePic.apk",
+    "appVersion": "1.1.1",
+    "updatedAt": "2026-10-21",
+    "apkUrl": "https://github.com/SGorgeous/pokemon-sprite/releases/download/v1.1.1/PokePic-1.1.1-Felis.apk",
+    "apkVersion": "1.1.1",
+    "cafeCount": 1875,
+    "cafeVersion": "1875-388080539",
+    "note": "Felis 1.1.1：网页版换成沉浸毛玻璃风格；语言 / 收藏 / 多选同步；「检查更新」可直接下载安装"
 }
