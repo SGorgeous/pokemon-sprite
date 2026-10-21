@@ -158,31 +158,144 @@ const S = {
   cafe:[], cafeOk:false, cafeGroup:"",
   cdn:"ghproxy",
   lang: "zh",              // zh | en
-  zh: {},                  // id -> 中文名
+  zh: {},                  // { 中文名: id } 原始表
+  zhById: null,            // Map: id -> 中文名
+  terms: [],               // 搜索分词
   fav: [],                 // 收藏的 URL
   favOnly: false,
   sel: [],                 // 多选中的 URL
   selMode: false,
 };
 
-/* ---------------- 本地存储：语言 / 收藏 ---------------- */
+/* ---------------- 语言 / 本地存储 ---------------- */
 function loadPrefs(){
   try{
-    S.lang = localStorage.getItem("pp.lang") || "zh";
+    S.lang = localStorage.getItem("lang") || "zh";   // 和手机端共用同一个键
     S.fav  = JSON.parse(localStorage.getItem("pp.fav") || "[]");
   }catch(e){ S.fav = []; }
 }
 function savePrefs(){
   try{
-    localStorage.setItem("pp.lang", S.lang);
+    localStorage.setItem("lang", S.lang);
     localStorage.setItem("pp.fav", JSON.stringify(S.fav));
   }catch(e){}
 }
-/** 卡片上显示的名字 */
-function dispName(id){
-  if(S.lang === "zh" && S.zh[id]) return S.zh[id];
-  return id;
+
+/* ---- 以下整段照搬手机端，别各写一套 ---- */
+function buildNameIndex(){
+  // zh.json: { 中文名: showdownId }  → 反过来 id → 中文
+  S.zhById = new Map();
+  for(const zh in (S.zh || {})){
+    const id = String(S.zh[zh]).replace(/\s+/g, '-').toLowerCase();
+    S.zhById.set(id, zh);
+  }
 }
+function titleCase(id){
+  return String(id || '').split('-').map((w, i) =>
+    i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w
+  ).join(' ');
+}
+
+/* ---- 形态译名 ----
+    -mega / -megax / -megay  → 超级XX / 超级XX X / 超级XX Y
+    -gmax                    → 超极巨XX
+    -alola/-galar/-hisui/…   → XX（阿罗拉的样子）
+    -f/-m                    → XX♀ / XX♂
+   拼不出来的后缀忽略，只译宝可梦名。 */
+const PREFIX_FORM = {
+  mega:'超级', megax:'超级', megay:'超级',
+  primal:'原始', gmax:'超极巨',
+};
+const REGION_FORM = {
+  alola:'阿罗拉', galar:'伽勒尔', hisui:'洗翠', paldea:'帕底亚',
+  alolatotem:'阿罗拉', galartotem:'伽勒尔',
+};
+const SEX_FORM = { f:'♀', m:'♂' };
+const MARK_FORM = {
+  totem:'霸主', origin:'起源', therian:'灵兽', sky:'天空', land:'化身',
+  white:'白', black:'黑', resolute:'觉悟', pirouette:'舞步', blade:'刀剑', shield:'盾牌',
+  zen:'达摩', complete:'完全', unbound:'解放', eternal:'永恒', ash:'小智版',
+};
+
+function zhBase(key){
+  if(!S.zhById) return null;
+  if(S.zhById.has(key)) return S.zhById.get(key);
+  const parts = key.split('-');
+  while(parts.length > 1){
+    parts.pop();
+    const b = parts.join('-');
+    if(S.zhById.has(b)) return S.zhById.get(b);
+  }
+  return null;
+}
+
+/* 逗号（全角/半角）分隔多个关键词；任一命中就算匹配 */
+function parseTerms(text){
+  return String(text || '')
+    .split(/[,，]/)
+    .map(t => t.trim().toLowerCase())
+    .filter(Boolean);
+}
+function nameMatches(name){
+  if(!S.terms || !S.terms.length) return true;
+  const raw = String(name || '').toLowerCase();
+  const zh = zhNameOf(name).toLowerCase();
+  return S.terms.some(t => raw.includes(t) || zh.includes(t));
+}
+
+function zhNameOf(idOrName){
+  const raw = String(idOrName || '');
+  if(!raw) return '';
+  const key = raw.toLowerCase().replace(/\s+/g, '-');
+  let zh = zhBase(key);
+  // 「Alolan Exeggutor」这类以地区开头的英文名
+  if(!zh){
+    const REGION_EN = { alolan:'阿罗拉', galarian:'伽勒尔', hisuian:'洗翠',
+                        paldean:'帕底亚', alola:'阿罗拉', galar:'伽勒尔' };
+    const words = raw.split(/\s+/);
+    if(words.length > 1){
+      const rg = REGION_EN[words[0].toLowerCase()];
+      if(rg){
+        const rest = zhBase(words.slice(1).join('-').toLowerCase());
+        if(rest) return `${rest}（${rg}的样子）`;
+      }
+    }
+  }
+  if(!zh) return titleCase(raw);
+
+  const parts = key.split('-');
+  const suffix = parts.slice(1);
+  let prefix = '', region = '', sex = '', extra = [], marks = '';
+  for(const t of suffix){
+    if(PREFIX_FORM[t] && !prefix){
+      prefix = PREFIX_FORM[t];
+      if(t === 'megax') marks += 'X';
+      if(t === 'megay') marks += 'Y';
+    } else if(REGION_FORM[t] && !region){
+      region = REGION_FORM[t];
+    } else if(SEX_FORM[t]){
+      sex = SEX_FORM[t];
+    } else if(MARK_FORM[t]){
+      extra.push(MARK_FORM[t] + '形态');
+    }
+  }
+  let out = (prefix || '') + zh + sex + marks;
+  if(!region && !extra.length) return out;
+  return out + '（' + [region ? region + '的样子' : '', extra.join('·')].filter(Boolean).join('·') + '）';
+}
+
+/** 卡片上显示的名字：英文环境 titleCase，中文环境走 zhNameOf */
+function dispName(idOrName){
+  const raw = String(idOrName || '');
+  if(!raw) return '';
+  if((localStorage.getItem('lang') || 'zh') === 'en') return titleCase(raw);
+  return zhNameOf(raw);
+}
+function setLang(l){
+  S.lang = l;
+  localStorage.setItem('lang', l);
+}
+
 function isFav(url){ return S.fav.indexOf(url) >= 0; }
 function toggleFav(url){
   const i = S.fav.indexOf(url);
@@ -276,10 +389,11 @@ async function init(){
     S.pmd = pmd; S.official = off;
     loadPrefs();
     try{
-      const zhRaw = D && D.zh ? D.zh : await fetch("data/zh.json").then(r=>r.json());
-      // zh.json 是 { 中文名: showdownId }，反过来存 id -> 中文
-      for(const k in zhRaw){ S.zh[String(zhRaw[k]).replace(/\s+/g, "-")] = k; }
+      S.zh = D && D.zh ? D.zh : await fetch("data/zh.json").then(r=>r.json());
     }catch(e){ S.zh = {}; }
+    buildNameIndex();
+    el("btnLang").textContent = S.lang === "zh" ? "中文" : "EN";
+    el("btnLang").classList.toggle("on", S.lang === "zh");
     updFavN();
     S.sub = S.subs.find(s=>s.id==="ani") ? "ani" : S.subs[0].id;
     bind(); buildTree();
@@ -313,9 +427,10 @@ function bind(){
     render();
   };
   el("btnLang").onclick=()=>{
-    S.lang = S.lang === "zh" ? "en" : "zh";
+    setLang(S.lang === "zh" ? "en" : "zh");
     el("btnLang").textContent = S.lang === "zh" ? "中文" : "EN";
-    savePrefs(); render();
+    el("btnLang").classList.toggle("on", S.lang === "zh");
+    render();
   };
   el("btnFav").onclick=()=>{
     S.favOnly = !S.favOnly;
@@ -415,7 +530,8 @@ async function renderShowdown(c){
   }
   const subs = S.cross ? S.subIds : [S.sub];
   const subIdx = S.subIds.indexOf(S.sub);
-  let names = Object.keys(S.nameMap).filter(n=>n.includes(S.query));
+  S.terms = parseTerms(S.query);
+  let names = Object.keys(S.nameMap).filter(n => nameMatches(n));
   const items=[];
   for(const n of names){
     const where = S.nameMap[n];
@@ -454,8 +570,7 @@ function drawSdGrid(c, items, multi=false){
     const url0 = urls[0];
     if(isSel(url0)) cd.classList.add("sel");
     const label = dispName(name);
-    const sub2 = (S.lang === "zh" && label !== name) ? `<span style="color:var(--dim)">${name}</span>` : "";
-    cd.innerHTML=`<div class="box"></div><div class="cap"><b>${label}</b> `+sub2+
+    cd.innerHTML=`<div class="box"></div><div class="cap"><b>${label}</b>`+
       (multi?`<br><span style="color:var(--dim)">${(alts||[]).length} 个系列</span>`:"")+`</div>`+
       `<button class="star" title="收藏">${isFav(url0)?"★":"☆"}</button>`;
     cd.querySelector(".box").appendChild(img);
