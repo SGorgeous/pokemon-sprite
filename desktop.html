@@ -5,48 +5,52 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>PokémonSprite 在线阅读器</title>
 <style>
-:root{--bg:#12161c;--panel:#1a2029;--panel2:#222a35;--line:#2e3846;--text:#dfe6ef;
-      --dim:#8b98a9;--accent:#4a9eff;--accent2:#ffb84a}
+:root{--bg:#F4F7FB;--panel:#FFFFFF;--panel2:#EEF3F9;--line:#E2E9F2;--text:#31404F;
+      --dim:#8B9AAD;--accent:#6BB3E6;--accent2:#F2994A}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
   font:13px/1.5 "Microsoft YaHei UI","Segoe UI",sans-serif;overflow:hidden}
 #app{display:grid;grid-template-columns:236px 1fr;height:100vh}
-#side{background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
-#side h1{font-size:13px;margin:0;padding:12px 14px 6px;color:var(--accent2);font-weight:600}
+#side{background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(18px) saturate(1.3);
+  backdrop-filter:blur(18px) saturate(1.3);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+#side h1{font-size:13px;margin:0;padding:12px 14px 6px;color:var(--text);font-weight:700}
 #side .hint{padding:0 14px 8px;color:var(--dim);font-size:11px;line-height:1.5}
 #tree{overflow-y:auto;flex:1;padding:0 6px 14px}
 .grp{margin:8px 6px 2px;color:var(--dim);font-size:11px}
 .sub{padding:4px 9px;border-radius:5px;cursor:pointer;display:flex;justify-content:space-between;
   gap:8px;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sub:hover{background:var(--panel2)}
-.sub.on{background:#24405f;color:#fff}
+.sub.on{background:var(--accent);color:#fff}
 .sub .n{color:var(--dim);font-size:11px;flex:none}
-.sub.on .n{color:#9fc4ea}
+.sub.on .n{color:#E8F4FD}
 #main{display:flex;flex-direction:column;min-width:0;min-height:0}
-#tabs{display:flex;gap:4px;padding:8px 12px 0;background:var(--panel);border-bottom:1px solid var(--line)}
+#tabs{display:flex;gap:4px;padding:8px 12px 0;background:rgba(255,255,255,.88);
+  -webkit-backdrop-filter:blur(18px) saturate(1.3);backdrop-filter:blur(18px) saturate(1.3);
+  border-bottom:1px solid var(--line);position:sticky;top:0;z-index:8}
 #tabs button{background:transparent;border:1px solid transparent;border-bottom:none;color:var(--dim);
   padding:7px 14px;border-radius:8px 8px 0 0;cursor:pointer;font-size:13px;font-family:inherit}
 #tabs button:hover{color:var(--text);background:var(--panel2)}
-#tabs button.on{background:var(--panel2);border-color:var(--line);color:var(--accent2)}
+#tabs button.on{background:var(--accent);border-color:var(--accent);color:#fff}
 #bar{display:flex;gap:10px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line);
-  background:var(--panel);flex-wrap:wrap}
-#q{flex:1;min-width:200px;padding:7px 11px;border-radius:7px;border:1px solid var(--line);
-  background:var(--panel2);color:var(--text);font-size:13px;outline:none;font-family:inherit}
+  background:rgba(255,255,255,.88);-webkit-backdrop-filter:blur(18px) saturate(1.3);
+  backdrop-filter:blur(18px) saturate(1.3);flex-wrap:wrap;position:sticky;top:0;z-index:7}
+#q{flex:1;min-width:200px;padding:7px 11px;border-radius:11px;border:1px solid var(--line);
+  background:#F7FAFE;color:var(--text);font-size:13px;outline:none;font-family:inherit}
 #q:focus{border-color:var(--accent)}
-select,button.mini{background:var(--panel2);color:var(--text);border:1px solid var(--line);
-  border-radius:7px;padding:6px 9px;font-size:12.5px;cursor:pointer;font-family:inherit}
+select,button.mini{background:#F7FAFE;color:var(--text);border:1px solid var(--line);
+  border-radius:10px;padding:6px 9px;font-size:12.5px;cursor:pointer;font-family:inherit}
 button.mini:hover{border-color:var(--accent)}
-button.mini.on{background:#24405f;border-color:var(--accent)}
+button.mini.on{background:var(--accent);border-color:var(--accent);color:#fff}
 #stat{color:var(--dim);font-size:11.5px;white-space:nowrap}
 #content{flex:1;overflow:auto;min-height:0;padding:14px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:9px;overflow:hidden;
-  cursor:zoom-in;display:flex;flex-direction:column}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;
+  cursor:pointer;transition:transform .15s,box-shadow .15s;position:relative}
 .card:hover{border-color:#5a4a38}
-.card .box{height:86px;display:flex;align-items:center;justify-content:center;background:#0e1117}
+.card .box{height:86px;display:flex;align-items:center;justify-content:center;background:#FBFDFF}
 .card img{max-width:100%;max-height:100%;image-rendering:pixelated;opacity:0;transition:opacity .18s}
 .card img.ok{opacity:1}
-.card .cap{font-size:10.5px;color:var(--dim);padding:3px 5px;white-space:nowrap;overflow:hidden;
+.card .cap{font-size:10.5px;color:var(--text);padding:4px 6px;white-space:nowrap;overflow:hidden;
   text-overflow:ellipsis;text-align:center}
 .card .cap b{color:var(--text);font-weight:500}
 #more{display:block;margin:16px auto;padding:8px 22px}
@@ -68,12 +72,14 @@ button.mini.on{background:#24405f;border-color:var(--accent)}
 #pmdStat{padding:6px 14px;border-top:1px solid var(--line);background:var(--panel);
   color:var(--dim);font-size:11.5px;display:flex;gap:16px;flex-wrap:wrap}
 #pmdStat b{color:var(--text)}
-#lb{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:99;display:none;flex-direction:column;
+#lb{position:fixed;inset:0;background:rgba(244,247,251,.96);-webkit-backdrop-filter:blur(10px);
+  backdrop-filter:blur(10px);z-index:99;display:none;flex-direction:column;
   align-items:center;justify-content:center;gap:14px;padding:22px}
 #lb.on{display:flex}
 #lb .stage img{image-rendering:pixelated;min-width:96px;max-height:50vh;background:
   repeating-conic-gradient(#1b2029 0 25%,#141920 0 50%) 0 0/18px 18px;border-radius:8px;padding:10px}
 #lb .cap{color:var(--dim);font-size:12px}
+#lb .stage{background:#F7FAFE}
 #lb .cap b{color:var(--text)}
 #lb .strip{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;align-content:flex-start;
   width:92vw;max-height:42vh;overflow:auto}
@@ -83,6 +89,10 @@ button.mini.on{background:#24405f;border-color:var(--accent)}
 .err{color:#ff7b72}
 .spin{color:var(--dim);padding:20px}
 .note{color:var(--dim);font-size:12px;line-height:1.8;max-width:640px}
+.star{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;
+  border:1px solid var(--line);background:rgba(255,255,255,.92);color:var(--accent2);
+  font-size:14px;line-height:1;cursor:pointer;display:none;align-items:center;justify-content:center}
+.card:hover .star{display:flex}
 </style>
 </head>
 <body>
@@ -105,6 +115,9 @@ button.mini.on{background:#24405f;border-color:var(--accent)}
       <span id="stat"></span>
       <button class="mini" id="btnCross" title="显示该名字在所有系列里的版本">全系列</button>
       <button class="mini" id="btnCdn" title="切换图片源">源: ghproxy</button>
+<button class="mini" id="btnLang" title="卡片名字用中文还是英文">中文</button>
+<button class="mini" id="btnFav" title="只看收藏">收藏 <b id="favN">0</b></button>
+<button class="mini" id="btnSel" title="多选后批量下载">多选</button>
     </div>
     <div id="content"><div class="spin">载入中…</div></div>
     <div class="pmd" id="pmdWrap">
@@ -144,7 +157,69 @@ const S = {
   pmd:[], pmdCur:null, official:[], offKind:"official-artwork", offShiny:false,
   cafe:[], cafeOk:false, cafeGroup:"",
   cdn:"ghproxy",
+  lang: "zh",              // zh | en
+  zh: {},                  // id -> 中文名
+  fav: [],                 // 收藏的 URL
+  favOnly: false,
+  sel: [],                 // 多选中的 URL
+  selMode: false,
 };
+
+/* ---------------- 本地存储：语言 / 收藏 ---------------- */
+function loadPrefs(){
+  try{
+    S.lang = localStorage.getItem("pp.lang") || "zh";
+    S.fav  = JSON.parse(localStorage.getItem("pp.fav") || "[]");
+  }catch(e){ S.fav = []; }
+}
+function savePrefs(){
+  try{
+    localStorage.setItem("pp.lang", S.lang);
+    localStorage.setItem("pp.fav", JSON.stringify(S.fav));
+  }catch(e){}
+}
+/** 卡片上显示的名字 */
+function dispName(id){
+  if(S.lang === "zh" && S.zh[id]) return S.zh[id];
+  return id;
+}
+function isFav(url){ return S.fav.indexOf(url) >= 0; }
+function toggleFav(url){
+  const i = S.fav.indexOf(url);
+  if(i >= 0) S.fav.splice(i, 1); else S.fav.push(url);
+  savePrefs(); updFavN();
+}
+function updFavN(){ const b = el("favN"); if(b) b.textContent = S.fav.length; }
+function isSel(url){ return S.sel.indexOf(url) >= 0; }
+function toggleSel(url){
+  const i = S.sel.indexOf(url);
+  if(i >= 0) S.sel.splice(i, 1); else S.sel.push(url);
+  updSelBar();
+}
+function updSelBar(){
+  let bar = el("selBar");
+  if(!S.selMode){ if(bar) bar.style.display = "none"; return; }
+  if(!bar){
+    bar = document.createElement("div"); bar.id = "selBar";
+    bar.style.cssText = "position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:60;" +
+      "display:flex;gap:10px;align-items:center;padding:9px 14px;border-radius:14px;" +
+      "background:rgba(255,255,255,.94);backdrop-filter:blur(16px);" +
+      "box-shadow:0 8px 26px rgba(120,150,190,.28);border:1px solid var(--line)";
+    document.body.appendChild(bar);
+  }
+  bar.style.display = "flex";
+  bar.innerHTML = `<span style="color:var(--dim)">已选 <b style="color:var(--accent)">${S.sel.length}</b></span>`;
+  const d = document.createElement("button"); d.className = "mini"; d.textContent = "下载选中";
+  d.onclick = () => {
+    for(const u of S.sel){
+      const a = document.createElement("a"); a.href = u; a.download = ""; a.target = "_blank";
+      document.body.appendChild(a); a.click(); a.remove();
+    }
+  };
+  const c = document.createElement("button"); c.className = "mini"; c.textContent = "清空";
+  c.onclick = () => { S.sel = []; updSelBar(); render(); };
+  bar.appendChild(d); bar.appendChild(c);
+}
 
 const CDN = {
   // 前缀代理：raw.githubusercontent.com 在国内常「挂起」，jsDelivr 又只是 301 回 raw，
@@ -199,6 +274,13 @@ async function init(){
     S.subs = subs.subs; S.groups = subs.groups;
     S.nameMap = names.map; S.subIds = names.subs;
     S.pmd = pmd; S.official = off;
+    loadPrefs();
+    try{
+      const zhRaw = D && D.zh ? D.zh : await fetch("data/zh.json").then(r=>r.json());
+      // zh.json 是 { 中文名: showdownId }，反过来存 id -> 中文
+      for(const k in zhRaw){ S.zh[String(zhRaw[k]).replace(/\s+/g, "-")] = k; }
+    }catch(e){ S.zh = {}; }
+    updFavN();
     S.sub = S.subs.find(s=>s.id==="ani") ? "ani" : S.subs[0].id;
     bind(); buildTree();
     await probeCafe();
@@ -229,6 +311,22 @@ function bind(){
     S.cdn = keys[(keys.indexOf(S.cdn) + 1) % keys.length];
     el("btnCdn").textContent = "源: " + C().label;
     render();
+  };
+  el("btnLang").onclick=()=>{
+    S.lang = S.lang === "zh" ? "en" : "zh";
+    el("btnLang").textContent = S.lang === "zh" ? "中文" : "EN";
+    savePrefs(); render();
+  };
+  el("btnFav").onclick=()=>{
+    S.favOnly = !S.favOnly;
+    el("btnFav").classList.toggle("on", S.favOnly);
+    render();
+  };
+  el("btnSel").onclick=()=>{
+    S.selMode = !S.selMode;
+    el("btnSel").classList.toggle("on", S.selMode);
+    if(!S.selMode) S.sel = [];
+    updSelBar(); render();
   };
   el("lb").onclick=()=>el("lb").classList.remove("on");
   document.addEventListener("keydown", e=>{
@@ -330,6 +428,16 @@ async function renderShowdown(c){
 }
 
 function drawSdGrid(c, items, multi=false){
+  if(S.favOnly){
+    items = items.filter(it=>{
+      const s = S.subs.find(x=>x.id===(it[1]||S.sub)) || S.subs[0];
+      return isFav(sprites.showdown(it[1]||S.sub, it[0], s.ext));
+    });
+    if(!items.length){
+      c.innerHTML = '<div class="spin">还没有收藏。鼠标移到卡片上点 ☆ 收藏。</div>';
+      return;
+    }
+  }
   const g=document.createElement("div"); g.className="grid";
   for(const it of items.slice(0, shown)){
     const [name, sub, alts] = it;
@@ -343,10 +451,20 @@ function drawSdGrid(c, items, multi=false){
       else { const p=img.parentElement; if(p) p.innerHTML='<span style="color:#5b6675;font-size:10px">无图</span>'; } };
     img.src=urls[0];
     const cd=document.createElement("div"); cd.className="card";
-    cd.innerHTML=`<div class="box"></div><div class="cap"><b>${name}</b>`+
-      (multi?`<br><span style="color:#8b98a9">${(alts||[]).length} 个系列</span>`:"")+`</div>`;
+    const url0 = urls[0];
+    if(isSel(url0)) cd.classList.add("sel");
+    const label = dispName(name);
+    const sub2 = (S.lang === "zh" && label !== name) ? `<span style="color:var(--dim)">${name}</span>` : "";
+    cd.innerHTML=`<div class="box"></div><div class="cap"><b>${label}</b> `+sub2+
+      (multi?`<br><span style="color:var(--dim)">${(alts||[]).length} 个系列</span>`:"")+`</div>`+
+      `<button class="star" title="收藏">${isFav(url0)?"★":"☆"}</button>`;
     cd.querySelector(".box").appendChild(img);
-    cd.onclick=()=>openLB(name);
+    const star = cd.querySelector(".star");
+    star.onclick = (e)=>{ e.stopPropagation(); toggleFav(url0); render(); };
+    cd.onclick=()=>{
+      if(S.selMode){ toggleSel(url0); cd.classList.toggle("sel", isSel(url0)); return; }
+      openLB(name);
+    };
     g.appendChild(cd);
   }
   c.appendChild(g);
